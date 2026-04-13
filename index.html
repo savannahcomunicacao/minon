@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard Minon</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red: #E30613;
+    --bg: #F4F4F0;
+    --card: #FFFFFF;
+    --border: #E2E2DC;
+    --gray: #F0F0EC;
+    --gray2: #E0E0DA;
+    --gray3: #111;
+    --gray4: #111;
+    --text: #111;
+    --green: #16a34a;
+    --amber: #d97706;
+    --purple: #7c3aed;
+  }
+  /* MENU FILTRO */
+  .filter-menu-wrap { position: relative; }
+  .filter-menu-btn { font-family: Verdana, Geneva, sans-serif; font-size: 11px; font-weight: 700; padding: 8px 18px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.15s; }
+  .filter-menu-btn:hover { border-color: var(--text); }
+  .filter-menu-btn.open { background: var(--text); color: #fff; border-color: var(--text); }
+  .filter-menu-btn .arrow { font-size: 9px; transition: transform 0.2s; }
+  .filter-menu-btn.open .arrow { transform: rotate(180deg); }
+  .filter-active-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); display: none; }
+  .filter-active-dot.visible { display: inline-block; }
+  .filter-dropdown { position: absolute; top: calc(100% + 8px); right: 0; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; min-width: 420px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); z-index: 100; display: none; flex-direction: column; gap: 12px; }
+  .filter-dropdown.open { display: flex; }
+  .filter-row { display: flex; align-items: center; gap: 0; }
+  .filter-row .filters-label { min-width: 80px; font-size: 10px; color: var(--text); text-transform: uppercase; letter-spacing: 0.08em; font-family: 'Courier New', monospace; border-right: 1px solid var(--border); padding-right: 14px; margin-right: 14px; flex-shrink: 0; }
+  .filter-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter-dropdown-footer { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 2px; display: flex; justify-content: flex-end; }
+  .btn-reset { font-family: Verdana, Geneva, sans-serif; font-size: 10px; padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; transition: all 0.15s; }
+  .btn-reset:hover { border-color: var(--text); color: var(--text); }
+  .filters-count { font-family: 'Courier New', monospace; font-size: 10px; background: var(--red); color: #fff; border-radius: 10px; padding: 1px 6px; margin-left: 2px; display: none; }
+  .filters-count.visible { display: inline-block; }
+
+  body { background: var(--bg); color: var(--text); font-family: Verdana, Geneva, sans-serif; min-height: 100vh; padding: 28px 32px; font-size: 13px; }
+
+  /* HEADER */
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+  .logo-wrap svg { height: 46px; width: auto; }
+  .header-right { text-align: right; }
+  .header-period { font-size: 11px; color: var(--text); letter-spacing: 0.1em; text-transform: uppercase; font-family: 'Courier New', monospace; }
+  .header-title { font-size: 12px; font-weight: 700; color: var(--text); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 3px; }
+
+  /* FILTROS */
+  .filters-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
+  .filters-label { font-size: 10px; color: var(--text); text-transform: uppercase; letter-spacing: 0.08em; font-family: 'Courier New', monospace; margin-right: 2px; }
+  .btn-filter { font-family: Verdana, Geneva, sans-serif; font-size: 10px; padding: 5px 13px; border-radius: 20px; border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer; transition: all 0.15s; font-weight: 700; }
+  .btn-filter:hover { border-color: var(--text); color: var(--text); }
+  .btn-filter.active { background: var(--text); border-color: var(--text); color: #fff; }
+  .btn-filter.active-red { background: var(--red); border-color: var(--red); color: #fff; }
+  .btn-filter.active-amber { background: var(--amber); border-color: var(--amber); color: #fff; }
+  .divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+  .filters-section { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; }
+  .filter-row { display: flex; align-items: center; gap: 0; }
+  .filter-row .filters-label { min-width: 90px; font-size: 10px; color: var(--text); text-transform: uppercase; letter-spacing: 0.08em; font-family: 'Courier New', monospace; border-right: 1px solid var(--border); padding-right: 16px; margin-right: 16px; }
+  .filter-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* KPIs */
+  .kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; margin-bottom: 20px; }
+  .kpi { background: var(--card); padding: 20px 18px; position: relative; overflow: hidden; border: 1px solid var(--border); }
+  .kpi:first-child { border-radius: 8px 0 0 8px; }
+  .kpi:last-child  { border-radius: 0 8px 8px 0; }
+  .kpi::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+  .kpi.accent::before { background: var(--red); }
+  .kpi.ok::before     { background: var(--green); }
+  .kpi.warn::before   { background: var(--amber); }
+  .kpi.neu::before    { background: var(--gray3); }
+  .kpi.alert::before  { background: var(--purple); }
+  .kpi-label { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text); margin-bottom: 7px; }
+  .kpi-value { font-size: 32px; font-weight: 700; line-height: 1; color: var(--text); }
+  .kpi-value span { font-size: 13px; font-weight: 400; color: var(--text); margin-left: 3px; }
+  .kpi-sub { font-family: 'Courier New', monospace; font-size: 10px; color: var(--text); margin-top: 6px; }
+  .kpi-alert { font-family: 'Courier New', monospace; font-size: 10px; color: var(--purple); margin-top: 6px; font-weight: 700; }
+
+  /* PROGRESSO */
+  .progress-section { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px; }
+  .progress-label { font-family:'Courier New',monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text); white-space:nowrap; min-width:120px; }
+  .progress-bar-wrap { flex:1; height:7px; background:var(--gray); border-radius:4px; overflow:hidden; position:relative; }
+  .progress-fill-pub { position:absolute; left:0; top:0; bottom:0; width:45%; background:var(--red); }
+  .progress-fill-adj { position:absolute; left:45%; top:0; bottom:0; width:41%; background:var(--amber); opacity:0.6; }
+  .progress-legend { display:flex; gap:16px; font-family:'Courier New',monospace; font-size:10px; white-space:nowrap; }
+  .leg { display:flex; align-items:center; gap:6px; color:var(--text); }
+  .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .dot-red{background:var(--red);} .dot-amb{background:var(--amber);} .dot-gray{background:var(--gray2);border:1px solid var(--gray3);}
+
+  /* CARDS */
+  .card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:20px; }
+  .card-title { font-family:'Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text); margin-bottom:14px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .badge { display:inline-block; padding:3px 9px; border-radius:20px; font-size:9px; letter-spacing:0.06em; font-weight:700; }
+  .badge-pub { background:rgba(227,6,19,0.08); color:var(--red); border:1px solid rgba(227,6,19,0.2); }
+  .badge-adj { background:rgba(217,119,6,0.08); color:var(--amber); border:1px solid rgba(217,119,6,0.2); }
+  .count-badge { font-family:'Courier New',monospace; font-size:9px; padding:2px 8px; border-radius:10px; background:var(--gray); color:var(--text); border:1px solid var(--border); margin-left:auto; }
+  .no-results { font-family:'Courier New',monospace; font-size:10px; color:var(--text); padding:16px 0; text-align:center; display:none; }
+
+  /* PUBLICADOS */
+  .main-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+  .pub-list { display:flex; flex-direction:column; gap:5px; }
+  .pub-item { display:grid; grid-template-columns:50px 1fr 88px 36px; align-items:center; gap:8px; padding:8px 10px; border-radius:5px; background:var(--bg); cursor:default; transition: background 0.12s; }
+  .pub-item:hover { background:var(--gray2); }
+  .pub-item.hidden { display: none; }
+  .pub-date { font-family:'Courier New',monospace; font-size:10px; color:var(--text); }
+  .pub-type { font-size:10px; color:var(--text); }
+  .pub-seg { font-family:'Courier New',monospace; font-size:9px; color:var(--text); text-align:right; }
+  .ver-pill { font-family:'Courier New',monospace; font-size:9px; padding:2px 6px; border-radius:4px; text-align:center; font-weight:700; }
+  .ver-high { background:rgba(227,6,19,0.1); color:var(--red); }
+  .ver-mid  { background:rgba(217,119,6,0.1); color:#b45309; }
+  .ver-low  { background:rgba(22,163,74,0.1); color:var(--green); }
+
+  /* BARRAS VERSÕES */
+  .rev-bars { display:flex; flex-direction:column; gap:7px; margin-top:4px; }
+  .rev-row { display:grid; grid-template-columns:70px 1fr 30px; align-items:center; gap:7px; }
+  .rev-row.hidden { display: none; }
+  .rev-date { font-family:'Courier New',monospace; font-size:10px; color:var(--text); text-align:right; }
+  .rev-track { height:18px; background:var(--bg); border-radius:3px; overflow:hidden; border:1px solid var(--border); }
+  .rev-fill { height:100%; border-radius:3px; display:flex; align-items:center; padding-left:6px; }
+  .rev-fill span { font-family:'Courier New',monospace; font-size:8px; color:rgba(255,255,255,0.9); white-space:nowrap; overflow:hidden; }
+  .rev-num { font-family:'Courier New',monospace; font-size:10px; color:var(--text); font-weight:700; text-align:right; }
+
+  /* EM AJUSTE */
+  .adj-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+  .adj-item { padding:10px 11px; border-radius:5px; background:var(--bg); border-left:2px solid var(--amber); border-top:1px solid var(--border); border-right:1px solid var(--border); border-bottom:1px solid var(--border); cursor:default; transition: background 0.12s; }
+  .adj-item:hover { background: var(--gray2); }
+  .adj-item.hidden { display: none; }
+  .adj-date { font-family:'Courier New',monospace; font-size:9px; color:var(--text); margin-bottom:3px; }
+  .adj-type { font-size:10px; font-weight:700; color:var(--text); }
+  .adj-seg { font-family:'Courier New',monospace; font-size:9px; color:var(--text); margin-top:3px; line-height:1.4; }
+
+  /* LEADS */
+  .leads-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 14px; }
+  .leads-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 4px; }
+  .lead-kpi { background: var(--bg); border-radius: 6px; padding: 14px 16px; border: 1px solid var(--border); }
+  .lead-kpi-label { font-family: 'Courier New', monospace; font-size: 10px; color: var(--text); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .lead-kpi-value { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1; }
+  .lead-kpi-value span { font-size: 12px; font-weight: 400; color: var(--text); margin-left: 2px; }
+  .lead-kpi-sub { font-family: 'Courier New', monospace; font-size: 10px; color: var(--text); margin-top: 5px; }
+  .lead-kpi.warn .lead-kpi-value { color: var(--amber); }
+  .lead-kpi.danger .lead-kpi-value { color: var(--red); }
+  .lead-kpi.purple .lead-kpi-value { color: var(--purple); }
+  .lead-kpi.warn { border-left: 3px solid var(--amber); }
+  .lead-kpi.danger { border-left: 3px solid var(--red); }
+  .lead-kpi.purple { border-left: 3px solid var(--purple); }
+  .lead-disclaimer { font-family: 'Courier New', monospace; font-size: 10px; color: var(--text); margin-top: 14px; padding: 10px 14px; background: var(--gray); border-radius: 5px; border-left: 3px solid var(--gray2); line-height: 1.6; }
+
+  /* GRÁFICO HORAS */
+  .hours-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 14px; }
+  .hours-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; align-items: end; margin-top: 16px; }
+  .week-col { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+  .week-bar-bg { width: 100%; background: var(--gray); border-radius: 4px 4px 0 0; height: 130px; position: relative; display: flex; align-items: flex-end; }
+  .week-bar-fill { width: 100%; border-radius: 4px 4px 0 0; display: flex; align-items: flex-start; justify-content: center; padding-top: 7px; }
+  .week-bar-label { font-family: 'Courier New', monospace; font-size: 10px; font-weight: 700; color: #fff; }
+  .week-name { font-family: 'Courier New', monospace; font-size: 10px; color: var(--text); text-transform: uppercase; letter-spacing: 0.06em; }
+  .week-hours { font-size: 12px; font-weight: 700; color: var(--text); }
+  .week-pct { font-family: 'Courier New', monospace; font-size: 10px; color: var(--text); }
+  .week-pct.over { color: var(--red); font-weight: 700; }
+  .hours-legend { display: flex; gap: 18px; margin-top: 14px; font-family: 'Courier New', monospace; font-size: 10px; color: var(--text); align-items: center; flex-wrap: wrap; }
+  .legend-box { width: 11px; height: 11px; border-radius: 2px; display: inline-block; vertical-align: middle; margin-right: 4px; }
+
+  /* OBS */
+  .section-title { font-family:'Courier New',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text); margin:20px 0 12px; }
+  .obs-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  .obs-card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:18px; }
+  .obs-icon { font-size:18px; margin-bottom:8px; }
+  .obs-head { font-family:'Courier New',monospace; font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text); margin-bottom:6px; }
+  .obs-text { font-size:11px; line-height:1.75; color:var(--text); }
+  .obs-text strong { color:var(--red); }
+
+  /* FOOTER */
+  .footer { margin-top:24px; padding-top:14px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .footer-note { font-family:'Courier New',monospace; font-size:9px; color:var(--text); letter-spacing:0.08em; }
+  .eff-badge { font-family:'Courier New',monospace; font-size:9px; padding:4px 11px; border-radius:20px; background:rgba(227,6,19,0.06); color:var(--red); border:1px solid rgba(227,6,19,0.2); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo-wrap"><svg xmlns="http://www.w3.org/2000/svg" width="397" height="129" viewBox="0 0 397 129" fill="none"><path d="M271.125 128.746C270.751 128.746 270.377 128.746 270.01 128.738C261.888 128.599 253.913 126.926 246.936 123.889C242.108 121.79 237.868 119.112 234.265 115.906V122.605C234.265 124.013 233.656 125.437 232.578 126.515C231.506 127.594 230.083 128.21 228.667 128.21L197.684 128.225C195.042 128.225 192.46 125.936 192.122 123.309C192.049 122.928 191.866 122.818 191.308 122.818C190.86 122.818 190.699 122.818 190.552 123.551C190.244 125.07 189.613 128.225 185.02 128.225L161.469 128.239C161.308 128.247 161.146 128.254 160.985 128.254C158.248 128.254 156.421 126.567 156.143 123.83C155.856 122.84 155.556 122.84 155.145 122.84H155.013C154.646 122.84 154.36 122.84 154.125 123.793C153.773 125.239 153.039 128.247 148.637 128.247L126.128 128.261C123.721 128.261 121.227 126.288 120.676 123.94C120.647 123.837 120.368 122.854 119.752 122.854C119.121 122.854 118.842 123.903 118.828 123.947C118.285 126.281 115.783 128.261 113.376 128.261L90.7862 128.276C86.7436 128.276 85.6137 125.18 85.1294 123.859C85.0047 123.515 84.814 122.994 84.6966 122.876C84.6966 122.876 84.6232 122.84 84.4178 122.81C84.183 122.876 83.9629 123.25 83.8162 123.566C83.7061 124.182 83.4567 124.747 83.0825 125.246C81.8206 127.293 79.913 128.313 77.3744 128.313C77.1396 128.313 76.8975 128.305 76.6407 128.283L54.8063 128.298C52.0477 128.298 49.4431 125.899 49.2157 123.155C49.1937 123.023 49.135 122.891 48.5114 122.891C48.0124 122.891 47.9244 122.891 47.7043 123.72L47.6456 123.955L47.4108 124.49C46.9046 125.657 45.7307 128.379 42.209 128.379C41.8862 128.379 41.5414 128.357 41.1892 128.305L6.48601 128.328C5.07734 128.328 3.64666 127.711 2.57548 126.64C1.49697 125.562 0.880676 124.138 0.880676 122.73L0.924695 61.4156C1.0641 48.4295 5.27544 37.9671 13.4487 30.2488C18.8119 25.1864 25.8186 21.5473 33.7056 19.7205C37.4694 18.8547 41.3506 18.4072 45.2245 18.4072C48.3426 18.4072 51.3727 18.6933 54.2194 19.2582C58.9957 20.2047 63.0163 21.8922 66.017 24.1739C67.1249 23.4476 68.2914 22.7799 69.4873 22.1856C74.6671 19.6251 80.6026 18.3265 87.1397 18.3265C90.3093 18.3265 93.5595 18.6346 96.8023 19.2509C101.219 20.0873 105.533 21.496 109.158 23.2568C111.461 14.0051 117.287 6.69025 125.555 2.83841C129.371 1.0629 133.597 0.116455 137.786 0.116455C142.049 0.116455 146.304 1.09225 150.09 2.93379C158.234 6.89568 163.81 14.3426 166.099 24.1592C168.05 23.1614 170.215 22.2663 172.526 21.518C178.872 19.4563 185.945 18.4438 192.966 18.6273C201.022 18.8474 208.572 20.6816 214.808 23.9465C220.692 27.0206 225.41 31.2833 228.887 36.6392C233.957 30.5863 240.487 25.8174 248 22.7212C255.403 19.6691 263.803 18.2531 272.057 18.664C280.304 19.0748 288.404 21.2612 295.476 24.9883C301.859 28.3486 307.34 32.9414 311.537 38.422C316.577 30.1608 324.721 24.0052 334.934 20.8357C339.908 19.2949 345.176 18.5099 350.591 18.5099C352.645 18.5099 354.714 18.6273 356.753 18.8547C364.281 19.6984 371.456 22.0682 377.517 25.722C390.048 33.2642 396.945 45.4287 396.959 59.9703L396.996 121.959C396.996 124.806 394.501 128.239 391.398 128.247L356.144 128.269C354.662 128.269 353.217 127.63 352.175 126.53C351.207 125.495 350.664 124.146 350.664 122.766C350.591 122.752 350.458 122.722 350.246 122.722H350.172C349.681 122.722 349.439 122.781 349.343 122.81C349.314 122.884 349.277 122.994 349.241 123.111C349.204 124.351 348.72 125.562 347.869 126.493C346.783 127.689 345.22 128.35 343.488 128.357L313.833 128.372L313.686 128.357C308.881 127.865 306.518 125.268 306.658 120.624V116.992C302.798 120.184 298.228 122.825 293.143 124.776C286.408 127.366 278.792 128.731 271.14 128.731M228.381 99.8459L233.641 106.677C237.508 111.688 242.761 115.664 249.269 118.496C255.542 121.225 262.747 122.737 270.098 122.862C277.384 122.986 284.64 121.754 291.015 119.303C297.685 116.743 303.319 112.869 307.311 108.1L312.49 101.908V120.734L312.498 120.785C312.446 122.275 312.476 122.341 314.104 122.517L343.305 122.502L343.422 122.033C343.76 120.719 344.758 116.867 350.062 116.867H350.216C352.755 116.867 354.252 117.953 355.059 118.87C356.144 120.103 356.453 121.541 356.504 122.414L390.87 122.392C390.98 122.245 391.082 122.047 391.112 121.915L391.075 59.9923C391.068 47.5857 385.176 37.2115 374.479 30.7697C369.138 27.5562 362.777 25.4579 356.093 24.7095C354.274 24.5041 352.417 24.4014 350.583 24.4014C345.756 24.4014 341.075 25.091 336.665 26.463C326.32 29.6692 318.47 36.3604 314.552 45.3113L312.278 50.5058L309.35 45.6488C305.476 39.2364 299.732 33.8952 292.725 30.2048C286.401 26.8739 279.144 24.9223 271.749 24.5481C264.353 24.1812 256.833 25.4432 250.223 28.1725C242.314 31.4374 235.644 36.7859 230.934 43.6385L228.088 47.7838L225.879 43.2717C222.871 37.1381 218.227 32.3912 212.071 29.1703C206.627 26.3236 199.958 24.7095 192.797 24.5187C192.306 24.5041 191.822 24.4967 191.33 24.4967C185.563 24.4967 179.525 25.4285 174.331 27.116C170.926 28.2238 167.918 29.6619 165.644 31.2686L161.66 34.086L161.044 29.2437C159.782 19.3243 154.976 11.8627 147.522 8.23098C144.528 6.77829 141.161 6.00793 137.786 6.00793C134.455 6.00793 131.08 6.75629 128.035 8.17963C120.42 11.7307 115.372 19.0308 114.198 28.2092L113.604 32.8681L109.678 30.2928C106.193 28.0037 100.977 26.0448 95.7165 25.047C92.8331 24.5041 89.9497 24.2253 87.1471 24.2253C81.5197 24.2253 76.4573 25.3185 72.0993 27.4755C70.5072 28.2605 69.0031 29.1996 67.6238 30.2561L65.5621 31.8409L63.7426 29.9847C61.5195 27.7176 57.7337 25.9641 53.0822 25.0397C50.6097 24.5481 47.9684 24.2986 45.2318 24.2986C41.7982 24.2986 38.3645 24.6875 35.0336 25.4579C28.159 27.0426 22.0914 30.1828 17.4839 34.5335C10.5139 41.1146 6.91889 50.1683 6.8015 61.445L6.75747 122.48L41.6514 122.458L41.8935 122.495C41.9376 122.392 41.9889 122.282 42.0329 122.179L42.1063 122.01C43.3976 117.535 47.0073 117.043 48.5187 117.043C52.8841 117.043 54.7843 120.184 55.0558 122.443L76.9049 122.429L77.0369 122.443C77.1617 122.458 77.279 122.458 77.3964 122.458C77.8366 122.458 77.9834 122.37 77.9907 122.37C77.9981 122.363 78.0201 122.333 78.0421 122.297V122.267L78.2402 121.761C79.4361 118.702 81.7178 116.948 84.5132 116.941H84.7699C89.0106 117.322 90.1332 120.382 90.6688 121.856C90.7275 122.025 90.8082 122.245 90.8815 122.421L113.141 122.407C113.141 122.407 113.178 122.377 113.193 122.37C113.699 120.411 115.643 116.999 119.767 116.999C124.022 116.999 125.878 120.616 126.348 122.363C126.362 122.377 126.384 122.392 126.399 122.399L148.446 122.385C149.283 119.002 151.741 116.977 155.027 116.977H155.167C158.476 116.977 160.897 118.944 161.851 122.377L184.83 122.363C185.519 119.024 188.006 116.955 191.33 116.955C195.894 116.955 197.618 120.352 197.94 122.355L228.418 122.341L228.403 99.8533L228.381 99.8459Z" fill="#1D1D1B"/><path fill-rule="evenodd" clip-rule="evenodd" d="M53.2952 114.036L53.2659 65.6055C53.2659 60.9833 51.4317 58.3053 48.2402 58.3053C45.3495 58.3053 43.8307 60.9906 43.8307 65.6128L43.8601 114.051L17.5282 114.065L17.4989 61.7536C17.4989 55.7961 18.8635 50.8731 21.6002 46.6985C24.036 42.9714 27.9905 40.2861 32.4 38.4959C36.5086 36.4049 40.918 35.6566 45.6356 35.6566C49.8983 35.6566 54.161 35.95 57.6607 37.7329C61.7693 38.7747 64.3592 41.0051 66.4942 43.3896C68.6219 41.0051 71.8207 38.7674 75.0122 37.7182C79.1209 35.928 83.0754 35.6272 86.7292 35.6272C92.0557 35.6272 96.7733 36.3682 101.036 38.4519C105.453 40.2347 108.652 43.3675 111.234 47.0873C113.824 51.2546 115.196 55.7301 115.203 61.6876L115.233 113.999L89.0549 114.014L89.0256 66.772C89.0256 60.9613 87.4995 58.276 84.1466 58.276C80.9477 58.276 79.8839 60.9613 79.8912 66.031L79.9206 114.021L53.2879 114.036H53.2952Z" fill="#1D1D1B"/><path d="M150.684 53.4851H124.66V113.544H150.684V53.4851Z" fill="#1D1D1B"/><path fill-rule="evenodd" clip-rule="evenodd" d="M159.686 113.977L159.657 62.1132C159.657 58.2394 160.413 54.5123 162.086 50.7852C163.604 47.7991 165.431 44.6736 168.623 42.5826C171.205 40.1981 174.404 38.5547 178.205 37.0653C182.005 35.8694 186.268 35.5686 190.839 35.5686C196.62 35.5686 202.255 36.3096 206.818 38.54C211.536 40.9245 215.498 44.05 217.779 47.7771C220.523 51.7977 221.895 56.7133 221.895 62.0839L221.925 113.948L195.747 113.963L195.718 66.2732C195.718 64.0355 195.409 62.0985 194.646 60.91C194.037 59.8682 192.819 59.1198 190.839 59.1271C187.493 59.1271 186.275 61.3649 186.275 65.5395L186.304 113.977L159.672 113.992L159.686 113.977Z" fill="#1D1D1B"/><path fill-rule="evenodd" clip-rule="evenodd" d="M269.724 113.097C248.418 113.111 230.905 95.7672 230.89 74.307C230.876 52.8468 248.367 35.4878 269.68 35.4732C290.986 35.4585 308.198 52.8027 308.206 74.2629C308.22 95.7232 291.03 113.082 269.724 113.097Z" fill="#E30613"/><path fill-rule="evenodd" clip-rule="evenodd" d="M320.348 113.955L320.318 62.1059C320.318 58.0633 321.074 54.3142 322.593 50.8659C324.266 47.8652 326.093 44.4168 329.13 42.6193C331.72 39.9194 334.911 38.2686 339.174 36.9186C342.982 35.5686 346.782 35.4146 351.346 35.4146C357.59 35.4146 362.916 36.1556 367.634 38.5547C372.197 40.653 376.005 43.9473 378.749 47.8358C381.038 51.8784 382.41 56.3759 382.41 62.0693L382.439 113.919L356.416 113.933L356.386 66.2806C356.386 64.0355 356.078 62.0839 355.469 60.7339C355.315 59.9856 353.796 59.0905 351.361 59.0905C348.47 59.0905 346.797 61.3429 346.797 65.6863L346.826 113.941L320.34 113.955H320.348Z" fill="#1D1D1B"/><path fill-rule="evenodd" clip-rule="evenodd" d="M137.683 14.7385C145.974 14.7385 152.738 21.4884 152.746 29.7864C152.746 38.077 145.996 44.8415 137.698 44.8489C129.407 44.8489 122.643 38.099 122.635 29.801C122.635 21.5104 129.385 14.7459 137.676 14.7385" fill="#E30613"/></svg></div>
+  <div class="header-right">
+    <div class="header-period">Março / 2026</div>
+    <div class="header-title">Dashboard de Conteúdo</div>
+  </div>
+
+  <div class="filter-menu-wrap" id="filter-menu-wrap">
+    <button class="filter-menu-btn" id="filter-menu-btn" onclick="toggleMenu()">
+      <span>Filtros</span>
+      <span class="filters-count" id="filters-count"></span>
+      <span class="filter-active-dot" id="filter-dot"></span>
+      <span class="arrow">&#9660;</span>
+    </button>
+    <div class="filter-dropdown" id="filter-dropdown">
+        <div class="filter-row">
+          <span class="filters-label">Status</span>
+          <div class="filter-buttons">
+            <button class="btn-filter active" data-filter-group="status" data-filter="all">Todos</button>
+            <button class="btn-filter" data-filter-group="status" data-filter="pub">Publicados</button>
+            <button class="btn-filter" data-filter-group="status" data-filter="adj">Em ajuste</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <span class="filters-label">Segmento</span>
+          <div class="filter-buttons">
+            <button class="btn-filter active" data-filter-group="seg" data-filter="all-seg">Todos</button>
+            <button class="btn-filter" data-filter-group="seg" data-filter="Feminino">Feminino</button>
+            <button class="btn-filter" data-filter-group="seg" data-filter="Masculino">Masculino</button>
+            <button class="btn-filter" data-filter-group="seg" data-filter="Cama e Banho">Cama e Banho</button>
+            <button class="btn-filter" data-filter-group="seg" data-filter="Infantil">Infantil</button>
+            <button class="btn-filter" data-filter-group="seg" data-filter="Plus Size">Plus Size</button>
+            <button class="btn-filter" data-filter-group="seg" data-filter="Todos">Todos setores</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <span class="filters-label">Formato</span>
+          <div class="filter-buttons">
+            <button class="btn-filter active" data-filter-group="fmt" data-filter="all-fmt">Todos</button>
+            <button class="btn-filter" data-filter-group="fmt" data-filter="Carrossel">Carrossel</button>
+            <button class="btn-filter" data-filter-group="fmt" data-filter="Reels">Reels</button>
+            <button class="btn-filter" data-filter-group="fmt" data-filter="Dark Post">Dark Post</button>
+          </div>
+        </div>
+        <div class="filter-dropdown-footer">
+          <button class="btn-reset" onclick="resetFilters()">Limpar filtros</button>
+        </div>
+      </div>
+    </div>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-strip">
+  <div class="kpi accent">
+    <div class="kpi-label">Total planejado</div>
+    <div class="kpi-value">22 <span>peças</span></div>
+    <div class="kpi-sub">no período</div>
+  </div>
+  <div class="kpi ok">
+    <div class="kpi-label">Publicados</div>
+    <div class="kpi-value">10 <span>peças</span></div>
+    <div class="kpi-sub">45% do total</div>
+  </div>
+  <div class="kpi warn">
+    <div class="kpi-label">Em ajuste</div>
+    <div class="kpi-value">9 <span>peças</span></div>
+    <div class="kpi-sub">41% do total</div>
+  </div>
+  <div class="kpi alert">
+    <div class="kpi-label">Horas em ajustes</div>
+    <div class="kpi-value" style="color:var(--purple);">100<span>h 30min</span></div>
+    <div class="kpi-sub">67 versões × 1h30</div>
+    <div class="kpi-alert">&#9650; 63% da carga mensal</div>
+  </div>
+</div>
+
+<!-- PROGRESSO -->
+<div class="progress-section">
+  <div class="progress-label">Progresso geral</div>
+  <div class="progress-bar-wrap">
+    <div class="progress-fill-pub"></div>
+    <div class="progress-fill-adj"></div>
+    <div style="position:absolute;left:86%;top:0;bottom:0;width:14%;background:#0ea5e9;opacity:0.7;border-radius:0 4px 4px 0;"></div>
+  </div>
+  <div class="progress-legend">
+    <div class="leg"><div class="dot dot-red"></div> Publicados 45%</div>
+    <div class="leg"><div class="dot dot-amb"></div> Em ajuste 41%</div>
+    <div class="leg"><div class="dot" style="background:#0ea5e9;"></div> Em criação 14%</div>
+  </div>
+</div>
+
+<!-- GRID PRINCIPAL -->
+<div class="main-grid" id="main-grid">
+  <div class="card" id="card-pub">
+    <div class="card-title">
+      Publicados
+      <span class="badge badge-pub" id="badge-pub">10 peças</span>
+      <span class="count-badge" id="count-pub" style="display:none"></span>
+    </div>
+    <div class="pub-list" id="pub-list">
+      <div class="pub-item" data-seg="Feminino" data-fmt="Carrossel"><div class="pub-date">02.03</div><div class="pub-type">Carrossel</div><div class="pub-seg">Feminino</div><div class="ver-pill ver-mid">v8</div></div>
+      <div class="pub-item" data-seg="Feminino" data-fmt="Carrossel"><div class="pub-date">05.03</div><div class="pub-type">Carrossel</div><div class="pub-seg">Feminino</div><div class="ver-pill ver-low">v4</div></div>
+      <div class="pub-item" data-seg="Feminino" data-fmt="Reels"><div class="pub-date">06.03</div><div class="pub-type">Reels</div><div class="pub-seg">Feminino</div><div class="ver-pill ver-low">v3</div></div>
+      <div class="pub-item" data-seg="Feminino" data-fmt="Carrossel"><div class="pub-date">08.03</div><div class="pub-type">Carrossel</div><div class="pub-seg">Feminino</div><div class="ver-pill ver-high">v12</div></div>
+      <div class="pub-item" data-seg="Plus Size" data-fmt="Carrossel"><div class="pub-date">10.03</div><div class="pub-type">Carrossel</div><div class="pub-seg">Plus Size</div><div class="ver-pill ver-low">v4</div></div>
+      <div class="pub-item" data-seg="Masculino" data-fmt="Dark Post"><div class="pub-date">11.03</div><div class="pub-type">Dark Post Estático</div><div class="pub-seg">Masculino</div><div class="ver-pill ver-high">v10</div></div>
+      <div class="pub-item" data-seg="Masculino" data-fmt="Reels"><div class="pub-date">12.03</div><div class="pub-type">Reels</div><div class="pub-seg">Masculino</div><div class="ver-pill ver-low">v2</div></div>
+      <div class="pub-item" data-seg="Cama e Banho" data-fmt="Dark Post"><div class="pub-date">13.03</div><div class="pub-type">Dark Post Estático</div><div class="pub-seg">Cama e Banho</div><div class="ver-pill ver-high">v11</div></div>
+      <div class="pub-item" data-seg="Cama e Banho" data-fmt="Carrossel"><div class="pub-date">16.03</div><div class="pub-type">Carrossel</div><div class="pub-seg">Cama e Banho</div><div class="ver-pill ver-mid">v5</div></div>
+      <div class="pub-item" data-seg="Masculino" data-fmt="Dark Post"><div class="pub-date">23.03</div><div class="pub-type">Dark Post Estático</div><div class="pub-seg">Masc. — Outono</div><div class="ver-pill ver-mid">v8</div></div>
+    </div>
+    <div class="no-results" id="no-pub">Nenhum resultado para este filtro</div>
+  </div>
+
+  <div class="card" id="card-rev">
+    <div class="card-title">Versões por peça publicada</div>
+    <div class="rev-bars" id="rev-bars">
+      <div class="rev-row" data-seg="Feminino" data-fmt="Carrossel"><div class="rev-date">08.03</div><div class="rev-track"><div class="rev-fill" style="width:100%;background:linear-gradient(90deg,#E30613,#a0000f);"><span>Feminino · Carrossel</span></div></div><div class="rev-num">v12</div></div>
+      <div class="rev-row" data-seg="Cama e Banho" data-fmt="Dark Post"><div class="rev-date">13.03</div><div class="rev-track"><div class="rev-fill" style="width:91.6%;background:linear-gradient(90deg,#c9001a,#9a000f);"><span>Cama e Banho · Dark Post</span></div></div><div class="rev-num">v11</div></div>
+      <div class="rev-row" data-seg="Masculino" data-fmt="Dark Post"><div class="rev-date">11.03</div><div class="rev-track"><div class="rev-fill" style="width:83.3%;background:linear-gradient(90deg,#b51216,#8a0012);"><span>Masculino · Dark Post</span></div></div><div class="rev-num">v10</div></div>
+      <div class="rev-row" data-seg="Feminino" data-fmt="Carrossel"><div class="rev-date">02.03</div><div class="rev-track"><div class="rev-fill" style="width:66.6%;background:#aaa;"><span>Feminino · Carrossel</span></div></div><div class="rev-num">v8</div></div>
+      <div class="rev-row" data-seg="Masculino" data-fmt="Dark Post"><div class="rev-date">23.03</div><div class="rev-track"><div class="rev-fill" style="width:66.6%;background:#bbb;"><span>Masc. Outono · Dark Post</span></div></div><div class="rev-num">v8</div></div>
+      <div class="rev-row" data-seg="Cama e Banho" data-fmt="Carrossel"><div class="rev-date">16.03</div><div class="rev-track"><div class="rev-fill" style="width:41.6%;background:#ccc;"><span style="color:#555;">Cama e Banho · Carrossel</span></div></div><div class="rev-num">v5</div></div>
+      <div class="rev-row" data-seg="Feminino" data-fmt="Carrossel"><div class="rev-date">05.03</div><div class="rev-track"><div class="rev-fill" style="width:33.3%;background:#d5d5d5;"><span style="color:#555;">Feminino · Carrossel</span></div></div><div class="rev-num">v4</div></div>
+      <div class="rev-row" data-seg="Plus Size" data-fmt="Carrossel"><div class="rev-date">10.03</div><div class="rev-track"><div class="rev-fill" style="width:33.3%;background:#d5d5d5;"><span style="color:#555;">Plus Size · Carrossel</span></div></div><div class="rev-num">v4</div></div>
+      <div class="rev-row" data-seg="Feminino" data-fmt="Reels"><div class="rev-date">06.03</div><div class="rev-track"><div class="rev-fill" style="width:25%;background:#e0e0e0;"><span style="color:#666;">Feminino · Reels</span></div></div><div class="rev-num">v3</div></div>
+      <div class="rev-row" data-seg="Masculino" data-fmt="Reels"><div class="rev-date">12.03</div><div class="rev-track"><div class="rev-fill" style="width:16.6%;background:#e8e8e8;"><span style="color:#666;">Masculino · Reels</span></div></div><div class="rev-num">v2</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- EM AJUSTE -->
+<div class="card" id="card-adj" style="margin-bottom:14px;">
+  <div class="card-title">
+    Em ajuste
+    <span class="badge badge-adj" id="badge-adj">9 peças</span>
+    <span class="count-badge" id="count-adj" style="display:none"></span>
+  </div>
+  <div class="adj-grid" id="adj-grid">
+    <div class="adj-item" data-seg="Infantil" data-fmt="Reels"><div class="adj-date">17.03</div><div class="adj-type">Reels</div><div class="adj-seg">Infantil — Cápsula Meninas</div></div>
+    <div class="adj-item" data-seg="Todos" data-fmt="Reels"><div class="adj-date">18.03</div><div class="adj-type">Reels</div><div class="adj-seg">Todos — Novidades</div></div>
+    <div class="adj-item" data-seg="Todos" data-fmt="Dark Post"><div class="adj-date">19.03</div><div class="adj-type">Dark Post Reels</div><div class="adj-seg">Todos — Novidades</div></div>
+    <div class="adj-item" data-seg="Masculino" data-fmt="Reels"><div class="adj-date">20.03</div><div class="adj-type">Reels</div><div class="adj-seg">Masculino — Outono</div></div>
+    <div class="adj-item" data-seg="Todos" data-fmt="Carrossel"><div class="adj-date">24.03</div><div class="adj-type">Carrossel</div><div class="adj-seg">Todos — Pantone Outono</div></div>
+    <div class="adj-item" data-seg="Todos" data-fmt="Carrossel"><div class="adj-date">25.03</div><div class="adj-type">Carrossel</div><div class="adj-seg">Todos — Outono</div></div>
+    <div class="adj-item" data-seg="Infantil" data-fmt="Reels"><div class="adj-date">27.03</div><div class="adj-type">Reels</div><div class="adj-seg">Infantil — Cápsula Meninos</div></div>
+    <div class="adj-item" data-seg="Cama e Banho" data-fmt="Carrossel"><div class="adj-date">28.03</div><div class="adj-type">Carrossel</div><div class="adj-seg">Cama e Banho — Banho</div></div>
+    <div class="adj-item" data-seg="Todos" data-fmt="Dark Post"><div class="adj-date">30.03</div><div class="adj-type">Dark Post Est.</div><div class="adj-seg">A definir — Mais Vendido</div></div>
+
+  </div>
+  <div class="no-results" id="no-adj">Nenhum resultado para este filtro</div>
+</div>
+
+<div class="section-title" style="margin-top:24px;">Horas gastas em ajustes por semana</div>
+<div class="hours-card">
+  <div class="card-title" style="margin-bottom:4px;">
+    Distribuição semanal · base: 1h30 por versão &nbsp;|&nbsp; capacidade: 40h/semana
+    <span style="font-family:'Courier New',monospace;font-size:9px;padding:3px 9px;border-radius:10px;background:rgba(124,58,237,0.08);color:var(--purple);border:1px solid rgba(124,58,237,0.2);font-weight:700;">100h30 total</span>
+  </div>
+  <div class="hours-grid">
+    <div class="week-col">
+      <div class="week-bar-bg">
+        <div class="week-bar-fill" style="height:30%;background:var(--purple);opacity:0.65;">
+          <span class="week-bar-label">12h</span>
+        </div>
+      </div>
+      <div class="week-name">Sem 1 · 01–07/03</div>
+      <div class="week-hours">12h</div>
+      <div class="week-pct">30% da capacidade</div>
+    </div>
+    <div class="week-col">
+      <div class="week-bar-bg" style="position:relative;">
+        <div style="position:absolute;top:24%;left:0;right:0;border-top:1px dashed rgba(227,6,19,0.6);z-index:2;">
+          <span style="position:absolute;right:2px;top:-14px;font-family:'Courier New',monospace;font-size:9px;color:var(--red);">40h</span>
+        </div>
+        <div class="week-bar-fill" style="height:100%;background:var(--red);opacity:0.85;">
+          <span class="week-bar-label">52,5h</span>
+        </div>
+      </div>
+      <div class="week-name">Sem 2 · 08–14/03</div>
+      <div class="week-hours" style="color:var(--red);">52,5h</div>
+      <div class="week-pct over">131% &#9650; acima do limite</div>
+    </div>
+    <div class="week-col">
+      <div class="week-bar-bg">
+        <div class="week-bar-fill" style="height:52.5%;background:var(--purple);opacity:0.65;">
+          <span class="week-bar-label">21h</span>
+        </div>
+      </div>
+      <div class="week-name">Sem 3 · 15–21/03</div>
+      <div class="week-hours">21h</div>
+      <div class="week-pct">52% da capacidade</div>
+    </div>
+
+    <div class="week-col">
+      <div class="week-bar-bg">
+        <div class="week-bar-fill" style="height:0%;background:var(--gray2);">
+          <span class="week-bar-label" style="color:var(--text);"></span>
+        </div>
+      </div>
+      <div class="week-name">Sem 4 · 22–31/03</div>
+      <div class="week-hours" style="color:var(--text);">0h</div>
+      <div class="week-pct" style="color:var(--text);font-style:italic;">em andamento</div>
+    </div>
+  </div>
+  <div class="hours-legend">
+    <span><span class="legend-box" style="background:var(--purple);opacity:0.65;"></span>Horas em ajustes</span>
+    <span><span class="legend-box" style="background:var(--red);opacity:0.85;"></span>Semana acima da capacidade</span>
+    <span style="color:var(--red);">&#9135;&#9135; Limite de 40h/semana</span>
+  </div>
+</div>
+
+
+<!-- ESTIMATIVA DE LEADS -->
+<div class="leads-card">
+  <div class="card-title">
+    Impacto em anúncios por ajustes em dark posts
+    <span style="font-family:'Courier New',monospace;font-size:9px;padding:3px 9px;border-radius:10px;background:rgba(217,119,6,0.08);color:var(--amber);border:1px solid rgba(217,119,6,0.2);font-weight:700;">estimativa</span>
+  </div>
+  <div class="leads-grid">
+    <div class="lead-kpi">
+      <div class="lead-kpi-label">Leads gerados</div>
+      <div class="lead-kpi-value">161</div>
+      <div class="lead-kpi-sub">01–20/03 · Dark Posts Meta</div>
+    </div>
+    <div class="lead-kpi">
+      <div class="lead-kpi-label">Ritmo médio</div>
+      <div class="lead-kpi-value">8<span>leads/dia</span></div>
+      <div class="lead-kpi-sub">161 leads ÷ 20 dias</div>
+    </div>
+    <div class="lead-kpi danger">
+      <div class="lead-kpi-label">Leads estimados perdidos</div>
+      <div class="lead-kpi-value">~160</div>
+      <div class="lead-kpi-sub">20 dias × 8 leads/dia</div>
+    </div>
+    <div class="lead-kpi warn">
+      <div class="lead-kpi-label">Dias impactados</div>
+      <div class="lead-kpi-value">~20<span>dias</span></div>
+      <div class="lead-kpi-sub">10 peças × ≈2 dias de atraso</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- PENDÊNCIAS -->
+<div class="section-title" style="margin-top:20px;">Pendências</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;">
+
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px;border-left:3px solid var(--amber);">
+    <div style="font-family:'Courier New',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--amber);margin-bottom:8px;">Aprovação</div>
+    <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">Planejamento</div>
+    <div style="font-family:'Courier New',monospace;font-size:10px;color:var(--text);margin-bottom:10px;">Crono Abril/2026</div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div style="width:7px;height:7px;border-radius:50%;background:var(--amber);flex-shrink:0;"></div>
+      <span style="font-family:'Courier New',monospace;font-size:10px;color:var(--text);">Prazo: 23/03</span>
+    </div>
+  </div>
+
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px;border-left:3px solid #0ea5e9;">
+    <div style="font-family:'Courier New',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:#0ea5e9;margin-bottom:8px;">Criação</div>
+    <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">Roteiros Reels</div>
+    <div style="font-family:'Courier New',monospace;font-size:10px;color:var(--text);margin-bottom:10px;">Crono Abril/2026</div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div style="width:7px;height:7px;border-radius:50%;background:#0ea5e9;flex-shrink:0;"></div>
+      <span style="font-family:'Courier New',monospace;font-size:10px;color:var(--text);">Prazo: 25/03</span>
+    </div>
+  </div>
+
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:18px;border-left:3px solid var(--red);">
+    <div style="font-family:'Courier New',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--red);margin-bottom:8px;">Gravação</div>
+    <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;">Reels</div>
+    <div style="font-family:'Courier New',monospace;font-size:10px;color:var(--text);margin-bottom:10px;">Crono Abril/2026</div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div style="width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0;"></div>
+      <span style="font-family:'Courier New',monospace;font-size:10px;color:var(--text);">Data: 27/03</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- OBS -->
+<div class="section-title">Observações estratégicas</div>
+<div class="obs-grid">
+  <div class="obs-card">
+    <div class="obs-icon">&#9888;&#65039;</div>
+    <div class="obs-head">Volume de revisões</div>
+    <div class="obs-text"><strong>67 versões</strong> para 10 peças publicadas = média de <strong>6,7 versões/peça</strong>. Indica necessidade de alinhamento na aprovação do cronograma e copy.</div>
+  </div>
+  <div class="obs-card">
+    <div class="obs-icon">&#128308;</div>
+    <div class="obs-head">Impacto em leads</div>
+    <div class="obs-text">O volume de ajustes nos dark posts representa uma perda estimada de <strong>~160 leads</strong>, equivalente a duplicar o resultado gerado no período sem o retrabalho.</div>
+  </div>
+  <div class="obs-card">
+    <div class="obs-icon">&#128997;</div>
+    <div class="obs-head">Semana crítica</div>
+    <div class="obs-text">Semana 2 (08–14/03) concentrou <strong>52,5h em ajustes</strong> — 131% da capacidade semanal de 40h.</div>
+  </div>
+</div>
+
+<!-- GRÁFICO DE HORAS — por último -->
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-note">MINON · Dashboard de Conteúdo · Março 2026</div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <div style="font-family:'Courier New',monospace;font-size:9px;color:var(--text);">Eficiência de publicação</div>
+    <div class="eff-badge">45%</div>
+  </div>
+</div>
+
+<!-- DISCLAIMER SAVANNAH -->
+<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);text-align:center;">
+  <span style="font-family:'Courier New',monospace;font-size:9px;color:var(--text);">Dashboard criado por Savannah Comunicação · Todos os direitos reservados © 2026</span>
+</div>
+
+<script>
+  var filterStatus='all', filterSeg='all-seg', filterFmt='all-fmt';
+
+  function toggleMenu(){
+    var btn=document.getElementById('filter-menu-btn');
+    var dd=document.getElementById('filter-dropdown');
+    btn.classList.toggle('open');
+    dd.classList.toggle('open');
+  }
+
+  document.addEventListener('click', function(e){
+    var wrap=document.getElementById('filter-menu-wrap');
+    if(wrap && !wrap.contains(e.target)){
+      document.getElementById('filter-menu-btn').classList.remove('open');
+      document.getElementById('filter-dropdown').classList.remove('open');
+    }
+  });
+
+  function updateFilterIndicator(){
+    var active=0;
+    if(filterStatus!=='all') active++;
+    if(filterSeg!=='all-seg') active++;
+    if(filterFmt!=='all-fmt') active++;
+    var cnt=document.getElementById('filters-count');
+    var dot=document.getElementById('filter-dot');
+    if(active>0){ cnt.textContent=active; cnt.classList.add('visible'); dot.classList.add('visible'); }
+    else{ cnt.classList.remove('visible'); dot.classList.remove('visible'); }
+  }
+
+  function resetFilters(){
+    filterStatus='all'; filterSeg='all-seg'; filterFmt='all-fmt';
+    document.querySelectorAll('.btn-filter').forEach(function(b){
+      b.classList.remove('active','active-red','active-amber');
+    });
+    document.querySelector('[data-filter="all"]').classList.add('active');
+    document.querySelector('[data-filter="all-seg"]').classList.add('active');
+    document.querySelector('[data-filter="all-fmt"]').classList.add('active');
+    updateFilterIndicator();
+    applyFilters();
+  }
+  function applyFilters(){
+    var pubItems=document.querySelectorAll('#pub-list .pub-item');
+    var revRows=document.querySelectorAll('#rev-bars .rev-row');
+    var adjItems=document.querySelectorAll('#adj-grid .adj-item');
+    var vp=0,va=0;
+    pubItems.forEach(function(el){
+      var ms=(filterSeg==='all-seg'||el.dataset.seg===filterSeg);
+      var mf=(filterFmt==='all-fmt'||el.dataset.fmt===filterFmt);
+      var mx=(filterStatus==='all'||filterStatus==='pub');
+      if(ms&&mf&&mx){el.classList.remove('hidden');vp++;}else el.classList.add('hidden');
+    });
+    revRows.forEach(function(el){
+      var ms=(filterSeg==='all-seg'||el.dataset.seg===filterSeg);
+      var mf=(filterFmt==='all-fmt'||el.dataset.fmt===filterFmt);
+      var mx=(filterStatus==='all'||filterStatus==='pub');
+      if(ms&&mf&&mx)el.classList.remove('hidden');else el.classList.add('hidden');
+    });
+    adjItems.forEach(function(el){
+      var ms=(filterSeg==='all-seg'||el.dataset.seg===filterSeg);
+      var mf=(filterFmt==='all-fmt'||el.dataset.fmt===filterFmt);
+      var mx=(filterStatus==='all'||filterStatus==='adj');
+      if(ms&&mf&&mx){el.classList.remove('hidden');va++;}else el.classList.add('hidden');
+    });
+    var cp=document.getElementById('card-pub'),cr=document.getElementById('card-rev'),ca=document.getElementById('card-adj'),g=document.getElementById('main-grid');
+    if(filterStatus==='adj'){cp.style.display='none';cr.style.display='none';ca.style.display='block';g.style.gridTemplateColumns='1fr';}
+    else if(filterStatus==='pub'){cp.style.display='block';cr.style.display='block';ca.style.display='none';g.style.gridTemplateColumns='1fr 1fr';}
+    else{cp.style.display='block';cr.style.display='block';ca.style.display='block';g.style.gridTemplateColumns='1fr 1fr';}
+    document.getElementById('no-pub').style.display=(vp===0&&filterStatus!=='adj')?'block':'none';
+    document.getElementById('no-adj').style.display=(va===0&&filterStatus!=='pub')?'block':'none';
+    var isFil=(filterSeg!=='all-seg'||filterFmt!=='all-fmt');
+    document.getElementById('badge-pub').style.display=isFil?'none':'inline-block';
+    document.getElementById('badge-adj').style.display=isFil?'none':'inline-block';
+    var bcp=document.getElementById('count-pub'),bca=document.getElementById('count-adj');
+    bcp.style.display=isFil?'inline-block':'none';bca.style.display=isFil?'inline-block':'none';
+    bcp.textContent=vp+' resultado'+(vp!==1?'s':'');bca.textContent=va+' resultado'+(va!==1?'s':'');
+  }
+  document.querySelectorAll('.btn-filter').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var g=btn.dataset.filterGroup,v=btn.dataset.filter;
+      document.querySelectorAll('.btn-filter[data-filter-group="'+g+'"]').forEach(function(b){b.classList.remove('active','active-red','active-amber');});
+      if(g==='status'){if(v==='pub')btn.classList.add('active-red');else if(v==='adj')btn.classList.add('active-amber');else btn.classList.add('active');filterStatus=v;}
+      else if(g==='seg'){btn.classList.add('active');filterSeg=v;}
+      else if(g==='fmt'){btn.classList.add('active');filterFmt=v;}
+      applyFilters();
+      updateFilterIndicator();
+    });
+  });
+</script>
+</body>
+</html>
