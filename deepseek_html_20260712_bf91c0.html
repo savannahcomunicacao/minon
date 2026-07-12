@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Performance - Meta + Google Ads (Junho 2026)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; }
+        body { background:#f4f7fc; padding:24px; }
+        .container { max-width:1440px; margin:0 auto; }
+        h1 { font-size:28px; color:#1a2b4a; margin-bottom:4px; display:flex; align-items:center; gap:12px; }
+        .subtitle { color:#5e6f8d; font-size:16px; margin-bottom:28px; border-left:4px solid #2a7de1; padding-left:16px; background:#eef3fa; border-radius:0 8px 8px 0; line-height:1.6; }
+
+        /* Resumo geral */
+        .resumo-box { background: #fff8e1; border-left:6px solid #ffb74d; border-radius:12px; padding:20px 24px; margin-bottom:28px; box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+        .resumo-box h2 { font-size:20px; color:#e65100; margin-bottom:8px; }
+        .resumo-box .grid-resumo { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+        .resumo-box .coluna p { margin:6px 0; font-size:15px; line-height:1.6; }
+        .resumo-box .badge-status { display:inline-block; padding:2px 12px; border-radius:20px; font-weight:600; font-size:13px; }
+        .badge-positivo { background:#e3f5eb; color:#0f7b3e; }
+        .badge-negativo { background:#fde8e8; color:#b33636; }
+        .badge-neutro { background:#f0f2f5; color:#6b7a93; }
+
+        .accordion { background:#fff; border-radius:16px; margin-bottom:24px; border:1px solid #e9edf4; box-shadow:0 4px 12px rgba(0,0,0,0.04); overflow:hidden; }
+        .accordion-header { background:#fff; padding:18px 24px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e9edf4; transition:background 0.2s; }
+        .accordion-header:hover { background:#f8faff; }
+        .accordion-header h2 { font-size:20px; color:#1a2b4a; font-weight:600; }
+        .accordion-header .icon { font-size:24px; transition:transform 0.3s; }
+        .accordion-header .icon.open { transform:rotate(180deg); }
+        .accordion-body { padding:24px; display:none; background:#fafcff; }
+        .accordion-body.open { display:block; }
+
+        .grid-cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:16px; margin-bottom:28px; }
+        .card { background:#fff; border-radius:12px; padding:16px 18px; box-shadow:0 2px 8px rgba(0,0,0,0.04); border:1px solid #e9edf4; position:relative; }
+        .card .label { font-size:13px; color:#6b7a93; font-weight:500; display:flex; align-items:center; gap:6px; }
+        .card .label .info-icon { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:#e9edf4; color:#3a4b6b; font-size:12px; font-weight:700; cursor:help; position:relative; }
+        .card .label .info-icon .tooltip-text { visibility:hidden; width:320px; background:#0b1b33; color:#fff; text-align:left; border-radius:8px; padding:14px 16px; position:absolute; z-index:100; bottom:calc(100% + 10px); left:50%; transform:translateX(-50%); opacity:0; transition:opacity 0.2s; font-weight:400; font-size:13px; line-height:1.6; box-shadow:0 4px 12px rgba(0,0,0,0.15); pointer-events:none; }
+        .card .label .info-icon .tooltip-text::after { content:""; position:absolute; top:100%; left:50%; transform:translateX(-50%); border-width:6px; border-style:solid; border-color:#0b1b33 transparent transparent transparent; }
+        .card .label .info-icon:hover .tooltip-text { visibility:visible; opacity:1; }
+        .card .label .info-icon .tooltip-text .good { color:#81c784; font-weight:600; }
+        .card .label .info-icon .tooltip-text .bad { color:#ef9a9a; font-weight:600; }
+        .card .label .info-icon .tooltip-text .neutral { color:#ffd54f; font-weight:600; }
+        .card .value { font-size:26px; font-weight:700; color:#0b1b33; margin:4px 0 2px; }
+        .card .comparison { font-size:13px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:4px; }
+        .card .comparison .up { color:#0f7b3e; background:#e3f5eb; padding:2px 10px; border-radius:20px; font-weight:600; }
+        .card .comparison .down { color:#b33636; background:#fde8e8; padding:2px 10px; border-radius:20px; font-weight:600; }
+        .card .comparison .neutral { color:#6b7a93; background:#f0f2f5; padding:2px 10px; border-radius:20px; font-weight:600; }
+
+        .creative-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr)); gap:20px; margin-bottom:28px; }
+        .creative-card { background:#fff; border-radius:16px; padding:16px; border:1px solid #e9edf4; box-shadow:0 2px 8px rgba(0,0,0,0.04); transition:transform 0.2s; }
+        .creative-card:hover { transform:translateY(-4px); box-shadow:0 8px 24px rgba(0,0,0,0.08); }
+        .creative-card .thumb-wrapper { position:relative; width:100%; height:180px; border-radius:10px; overflow:hidden; background:#f0f2f5; border:1px solid #e9edf4; display:flex; align-items:center; justify-content:center; }
+        .creative-card .thumb-wrapper img { width:100%; height:100%; object-fit:cover; display:block; }
+        .creative-card .thumb-wrapper .fallback { display:flex; align-items:center; justify-content:center; width:100%; height:100%; color:#6b7a93; font-size:14px; text-align:center; flex-direction:column; gap:8px; padding:10px; }
+        .creative-card .info { margin-top:12px; }
+        .creative-card .info .name { font-size:15px; font-weight:600; color:#1a2b4a; }
+        .creative-card .info .tags { font-size:13px; color:#6b7a93; margin-bottom:4px; }
+        .creative-card .info .tags .badge { display:inline-block; padding:2px 10px; border-radius:30px; font-size:11px; font-weight:600; margin:2px 4px 2px 0; }
+        .badge-setor-masculino { background:#dbeafe; color:#1d4ed8; }
+        .badge-setor-feminino { background:#fce4ec; color:#c2185b; }
+        .badge-setor-infantil { background:#e0f7fa; color:#00838f; }
+        .badge-setor-cama { background:#f3e5f5; color:#7b1fa2; }
+        .badge-setor-institucional { background:#e8eaf6; color:#283593; }
+        .badge-tag { background:#fff3e0; color:#e65100; }
+        .creative-card .metrics { display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px 8px; margin-top:8px; font-size:13px; }
+        .creative-card .metrics .label-metric { color:#6b7a93; }
+        .creative-card .metrics .value-metric { font-weight:600; color:#1a2b4a; text-align:right; }
+        .creative-card .status { margin-top:10px; padding:6px 12px; border-radius:8px; text-align:center; font-size:13px; font-weight:600; }
+        .creative-card .status.bom { background:#e3f5eb; color:#0f7b3e; }
+        .creative-card .status.atencao { background:#fde8e8; color:#b33636; }
+        .creative-card .status.neutro { background:#f0f2f5; color:#6b7a93; }
+
+        .chart-row { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:32px; }
+        .chart-box { background:#fff; border-radius:16px; padding:20px; border:1px solid #e9edf4; box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+        .chart-box h3 { font-size:16px; color:#1a2b4a; margin-bottom:8px; font-weight:600; }
+        .chart-box .chart-hint { font-size:13px; color:#1a4a7a; margin-bottom:14px; border-left:3px solid #2a7de1; padding-left:12px; background:#f0f6ff; border-radius:0 4px 4px 0; line-height:1.5; }
+        .chart-box.full { grid-column:1 / -1; }
+
+        .table-wrap { background:#fff; border-radius:16px; padding:20px; border:1px solid #e9edf4; overflow-x:auto; margin-top:8px; }
+        .table-wrap h3 { font-size:16px; color:#1a2b4a; margin-bottom:16px; font-weight:600; }
+        table { width:100%; border-collapse:collapse; font-size:14px; }
+        th { text-align:left; padding:10px 8px; background:#f4f7fc; color:#1a2b4a; font-weight:600; border-bottom:2px solid #dce3ed; }
+        td { padding:8px; border-bottom:1px solid #eef2f7; }
+
+        .insight-box { background:#e3f2fd; border-left:4px solid #1a73e8; border-radius:8px; padding:12px 16px; margin:12px 0; }
+        .insight-box strong { color:#1a73e8; }
+
+        @media (max-width:768px) { .chart-row { grid-template-columns:1fr; } .grid-cards { grid-template-columns:1fr 1fr; } .creative-grid { grid-template-columns:1fr; } .resumo-box .grid-resumo { grid-template-columns:1fr; } }
+        @media (max-width:480px) { .grid-cards { grid-template-columns:1fr; } }
+        .footer-note { margin-top:24px; color:#6b7a93; font-size:13px; text-align:center; border-top:1px solid #dce3ed; padding-top:20px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📊 Relatório de Performance · Junho 2026</h1>
+    <div class="subtitle">
+        Meta Ads + Google Ads · Comparativo com junho/2025 · Análise por idade, gênero e plataforma.
+        <span style="margin-left:12px;">🖱️ Passe o mouse no <strong>ⓘ</strong> para entender o que cada número significa e se é bom ou ruim.</span>
+    </div>
+
+    <!-- ========== RESUMO GERAL ========== -->
+    <div class="resumo-box" id="resumoGeral">
+        <h2>📌 Resumo e Insights do Mês</h2>
+        <div class="grid-resumo">
+            <div class="coluna">
+                <p><strong>🔢 Meta Ads:</strong> <span id="resumoMetaGasto"></span> gastos, <span id="resumoMetaMsg"></span> mensagens, CPA <span id="resumoMetaCPA"></span>, CTR <span id="resumoMetaCTR"></span>%, Frequência <span id="resumoMetaFreq"></span>.</p>
+                <p><strong>🔢 Google Ads:</strong> <span id="resumoGoogleGasto"></span> gastos, <span id="resumoGoogleConv"></span> conversões, CPA <span id="resumoGoogleCPA"></span>, Cliques <span id="resumoGoogleCliques"></span>.</p>
+                <p><strong>✅ Destaques Meta:</strong> <span id="resumoDestaquesMeta"></span></p>
+                <p><strong>✅ Destaques Google:</strong> <span id="resumoDestaquesGoogle"></span></p>
+            </div>
+            <div class="coluna">
+                <p><strong>⚠️ Oportunidades:</strong> <span id="resumoOportunidades"></span></p>
+                <p><strong>💡 Insights por idade/gênero:</strong> <span id="resumoInsights"></span></p>
+                <p><strong>📌 Sugestão de organização:</strong> <span id="resumoSugestoes"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SEÇÃO META ADS ========== -->
+    <div class="accordion" id="metaSection">
+        <div class="accordion-header" onclick="toggleSection('metaBody', this)">
+            <h2>📱 Meta Ads</h2>
+            <span class="icon">▼</span>
+        </div>
+        <div class="accordion-body" id="metaBody">
+            <div class="grid-cards" id="metaCards"></div>
+            <div class="chart-row">
+                <div class="chart-box">
+                    <h3>📊 Comparativo Meta: 2025 vs 2026</h3>
+                    <div class="chart-hint">Evolução de gasto, mensagens e CPA.</div>
+                    <canvas id="chartMetaComparativo"></canvas>
+                </div>
+                <div class="chart-box">
+                    <h3>📱 Mensagens por Plataforma</h3>
+                    <div class="chart-hint">Distribuição por plataforma (Instagram, Facebook, WhatsApp).</div>
+                    <canvas id="chartMetaPlataforma"></canvas>
+                </div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-box full">
+                    <h3>🏷️ Mensagens por Setor (com detalhe de idade)</h3>
+                    <div class="chart-hint">Barras empilhadas mostram a distribuição por faixa etária dentro de cada setor.</div>
+                    <canvas id="chartMetaSetorIdade"></canvas>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <h3>📋 Detalhamento Meta (gasto > 0)</h3>
+                <table>
+                    <thead><tr><th>Anúncio</th><th>Setor</th><th>Tags</th><th>Gasto (R$)</th><th>Mensagens</th><th>CPA (R$)</th><th>Alcance</th><th>Freq.</th><th>CTR (%)</th><th>Plataforma</th></tr></thead>
+                    <tbody id="metaTabela"></tbody>
+                </table>
+            </div>
+            <div class="insight-box" id="metaInsightBox"></div>
+        </div>
+    </div>
+
+    <!-- ========== SEÇÃO GOOGLE ADS ========== -->
+    <div class="accordion" id="googleSection">
+        <div class="accordion-header" onclick="toggleSection('googleBody', this)">
+            <h2>🔍 Google Ads</h2>
+            <span class="icon">▼</span>
+        </div>
+        <div class="accordion-body" id="googleBody">
+            <div class="grid-cards" id="googleCards"></div>
+            <div class="chart-row">
+                <div class="chart-box full">
+                    <h3>📊 Comparativo Google: 2025 vs 2026</h3>
+                    <div class="chart-hint">Evolução de gasto, conversões, cliques e CPA.</div>
+                    <canvas id="chartGoogleComparativo"></canvas>
+                </div>
+            </div>
+            <div class="chart-row">
+                <div class="chart-box">
+                    <h3>🌐 Performance por Rede</h3>
+                    <div class="chart-hint">Gasto e conversões por rede (Pesquisa, Display, Parceiros).</div>
+                    <canvas id="chartGoogleRede"></canvas>
+                </div>
+                <div class="chart-box">
+                    <h3>📱 Dispositivos</h3>
+                    <div class="chart-hint">Conversões por dispositivo (Smartphones lideram).</div>
+                    <canvas id="chartGoogleDispositivo"></canvas>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <h3>🔑 Principais palavras-chave (gasto > 0)</h3>
+                <table>
+                    <thead><tr><th>Palavra</th><th>Tipo</th><th>Custo (R$)</th><th>Cliques</th><th>CTR (%)</th></tr></thead>
+                    <tbody id="googleKeywords"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        Dados consolidados dos relatórios fornecidos. Imagens são ilustrativas – substitua os URLs no código.
+    </div>
+</div>
+
+<script>
+    // ================================================================
+    // 1. FUNÇÕES AUXILIARES
+    // ================================================================
+    function toggleSection(bodyId, headerEl) {
+        const body = document.getElementById(bodyId);
+        const icon = headerEl.querySelector('.icon');
+        body.classList.toggle('open');
+        icon.classList.toggle('open');
+    }
+    function fmt(v) { return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function fmtInt(v) { return v.toLocaleString('pt-BR'); }
+    function fmtCurrency(v) { return 'R$ ' + fmt(v); }
+    function pct(a, b) { if (a === 0) return b === 0 ? 0 : 100; return ((b - a) / Math.abs(a)) * 100; }
+
+    // ================================================================
+    // 2. MAPEAMENTO DE IMAGENS (substitua pelos links reais)
+    // ================================================================
+    const adImageMap = {
+        "Imagem - Dia dos namorados 26 - Linktree": "https://via.placeholder.com/300x180?text=Namorados+26",
+        "Imagem - Plus Size - WhatsApp Feminino": "https://via.placeholder.com/300x180?text=Plus+Size",
+        "Imagem - Paleta funcional - WhatsApp Feminino": "https://via.placeholder.com/300x180?text=Paleta",
+        "Vídeo - Dia dos namorados - Looks Femininos - Linktree": "https://via.placeholder.com/300x180?text=Looks+Fem",
+        "Imagem - tenis feminino - WhatsApp Feminino": "https://via.placeholder.com/300x180?text=Tenis+Fem",
+        "Vídeo - Teaser Oportunidades - WhatsApp - Infantil": "https://via.placeholder.com/300x180?text=Oportunidades",
+        "Imagem - Moletom Masculino - WhatsApp Masculino": "https://via.placeholder.com/300x180?text=Moletom+Masc",
+        "Carrossel - Camiseta básica feminina - WhatsApp Feminino": "https://via.placeholder.com/300x180?text=Camiseta",
+        "Imagem - Enxoval - WhatsApp - Cama e banho": "https://via.placeholder.com/300x180?text=Enxoval",
+        "dia dos namorados 2026 - WhatsApp Geral": "https://via.placeholder.com/300x180?text=Namorados+Geral",
+        "tênis casual - WhatsApp Masculino": "https://via.placeholder.com/300x180?text=Tenis+Casual",
+        "Pijama inverno": "https://via.placeholder.com/300x180?text=Pijama"
+    };
+
+    // ================================================================
+    // 3. DADOS META ADS (agregados)
+    // ================================================================
+    const metaAnuncios = [
+        {
+            name: "Imagem - Dia dos namorados 26 - Linktree",
+            setor: "Feminino", tags: ["Dia dos Namorados"],
+            spent: 192.01, messaging: 1, reach: 29662, frequency: 1.46, ctr: 2.57,
+            platform: "Instagram/Facebook",
+            ageGender: [
+                { age: "25-34", gender: "female", messaging: 148 },
+                { age: "18-24", gender: "female", messaging: 118 },
+                { age: "35-44", gender: "female", messaging: 73 },
+                { age: "65+", gender: "female", messaging: 66 },
+                { age: "25-34", gender: "male", messaging: 66 }
+            ]
+        },
+        {
+            name: "Imagem - Plus Size - WhatsApp Feminino",
+            setor: "Feminino", tags: ["Dia dos Namorados", "Plus Size"],
+            spent: 138.24, messaging: 3, reach: 13752, frequency: 1.49, ctr: 4.00,
+            platform: "Instagram/Facebook",
+            ageGender: [
+                { age: "65+", gender: "female", messaging: 130 },
+                { age: "55-64", gender: "female", messaging: 101 },
+                { age: "45-54", gender: "female", messaging: 61 },
+                { age: "25-34", gender: "female", messaging: 42 }
+            ]
+        },
+        {
+            name: "Imagem - Paleta funcional - WhatsApp Feminino",
+            setor: "Feminino", tags: ["Paleta Funcional"],
+            spent: 283.49, messaging: 120, reach: 16009, frequency: 1.90, ctr: 3.47,
+            platform: "Facebook/Instagram",
+            ageGender: [
+                { age: "55-64", gender: "male", messaging: 28 },
+                { age: "45-54", gender: "male", messaging: 24 },
+                { age: "35-44", gender: "male", messaging: 17 },
+                { age: "55-64", gender: "female", messaging: 14 }
+            ]
+        },
+        {
+            name: "Vídeo - Dia dos namorados - Looks Femininos - Linktree",
+            setor: "Feminino", tags: ["Dia dos Namorados", "Looks"],
+            spent: 45.50, messaging: 1, reach: 6463, frequency: 1.26, ctr: 5.04,
+            platform: "Instagram/Facebook",
+            ageGender: [
+                { age: "45-54", gender: "female", messaging: 22 },
+                { age: "35-44", gender: "female", messaging: 18 },
+                { age: "25-34", gender: "female", messaging: 16 }
+            ]
+        },
+        {
+            name: "Imagem - tenis feminino - WhatsApp Feminino",
+            setor: "Feminino", tags: ["Tênis"],
+            spent: 183.79, messaging: 90, reach: 9363, frequency: 1.59, ctr: 3.86,
+            platform: "Facebook/Instagram/WhatsApp",
+            ageGender: [
+                { age: "55-64", gender: "female", messaging: 30 },
+                { age: "65+", gender: "female", messaging: 27 },
+                { age: "45-54", gender: "female", messaging: 21 },
+                { age: "35-44", gender: "female", messaging: 9 }
+            ]
+        },
+        {
+            name: "Vídeo - Teaser Oportunidades - WhatsApp - Infantil",
+            setor: "Infantil", tags: ["Oportunidades"],
+            spent: 213.83, messaging: 86, reach: 8088, frequency: 2.08, ctr: 3.22,
+            platform: "Instagram/Facebook/WhatsApp",
+            ageGender: [
+                { age: "35-44", gender: "female", messaging: 25 },
+                { age: "25-34", gender: "female", messaging: 25 },
+                { age: "45-54", gender: "female", messaging: 19 },
+                { age: "55-64", gender: "female", messaging: 11 }
+            ]
+        },
+        {
+            name: "Imagem - Moletom Masculino - WhatsApp Masculino",
+            setor: "Masculino", tags: ["Moletom"],
+            spent: 537.11, messaging: 69, reach: 16652, frequency: 2.71, ctr: 2.06,
+            platform: "Facebook/Instagram",
+            ageGender: [
+                { age: "55-64", gender: "female", messaging: 18 },
+                { age: "45-54", gender: "female", messaging: 17 },
+                { age: "35-44", gender: "female", messaging: 9 },
+                { age: "25-34", gender: "female", messaging: 5 }
+            ]
+        },
+        {
+            name: "Carrossel - Camiseta básica feminina - WhatsApp Feminino",
+            setor: "Feminino", tags: ["Camiseta"],
+            spent: 363.14, messaging: 53, reach: 9391, frequency: 2.52, ctr: 4.36,
+            platform: "Facebook/Instagram",
+            ageGender: [
+                { age: "45-54", gender: "female", messaging: 17 },
+                { age: "65+", gender: "female", messaging: 16 },
+                { age: "55-64", gender: "female", messaging: 12 },
+                { age: "35-44", gender: "female", messaging: 6 }
+            ]
+        },
+        {
+            name: "Imagem - Enxoval - WhatsApp - Cama e banho",
+            setor: "Cama e Banho", tags: ["Enxoval"],
+            spent: 120.46, messaging: 14, reach: 4276, frequency: 1.68, ctr: 3.08,
+            platform: "Facebook/Instagram",
+            ageGender: [
+                { age: "65+", gender: "female", messaging: 6 },
+                { age: "45-54", gender: "female", messaging: 4 },
+                { age: "55-64", gender: "female", messaging: 2 }
+            ]
+        },
+        {
+            name: "dia dos namorados 2026 - WhatsApp Geral",
+            setor: "Institucional", tags: ["Dia dos Namorados", "WhatsApp Geral"],
+            spent: 23.53, messaging: 5, reach: 1294, frequency: 1.45, ctr: 2.03,
+            platform: "Facebook/Instagram",
+            ageGender: [
+                { age: "45-54", gender: "female", messaging: 3 },
+                { age: "35-44", gender: "female", messaging: 1 },
+                { age: "18-24", gender: "female", messaging: 1 }
+            ]
+        },
+        {
+            name: "tênis casual - WhatsApp Masculino",
+            setor: "Masculino", tags: ["Tênis"],
+            spent: 21.71, messaging: 2, reach: 1714, frequency: 1.47, ctr: 0.56,
+            platform: "Instagram/Facebook",
+            ageGender: [
+                { age: "35-44", gender: "male", messaging: 1 },
+                { age: "25-34", gender: "male", messaging: 1 }
+            ]
+        },
+        {
+            name: "Pijama inverno",
+            setor: "Infantil", tags: ["Pijama"],
+            spent: 21.41, messaging: 0, reach: 950, frequency: 1.10, ctr: 2.58,
+            platform: "Facebook/Instagram",
+            ageGender: []
+        }
+    ];
+
+    // Totais Meta
+    const totalMetaSpent = metaAnuncios.reduce((s, i) => s + i.spent, 0);
+    const totalMetaMsg = metaAnuncios.reduce((s, i) => s + i.messaging, 0);
+    const totalMetaReach = metaAnuncios.reduce((s, i) => s + i.reach, 0);
+    const metaCPA = totalMetaMsg > 0 ? totalMetaSpent / totalMetaMsg : 0;
+    const metaCTR = metaAnuncios.reduce((s, i) => s + (i.ctr || 0), 0) / metaAnuncios.filter(a => a.ctr).length;
+    const metaFreq = metaAnuncios.reduce((s, i) => s + (i.frequency || 0), 0) / metaAnuncios.filter(a => a.frequency).length;
+
+    // Dados 2025
+    const meta2025 = { spent: 969.67, messaging: 113, cpa: 8.58 };
+
+    // ================================================================
+    // 4. DADOS GOOGLE ADS
+    // ================================================================
+    const googleData = {
+        gasto: 487.95,
+        conversoes: 149,
+        custoConv: 3.27,
+        cliques: 733,
+        gasto2025: 605.74,
+        conversoes2025: 188,
+        custoConv2025: 3.22,
+        cliques2025: 964,
+        redes: [
+            { nome: 'Pesquisa Google', cliques: 455, custo: 366.74, conv: 149 },
+            { nome: 'Parceiros de pesquisa', cliques: 9, custo: 2.60, conv: 0 },
+            { nome: 'Rede de Display', cliques: 269, custo: 118.61, conv: 0 }
+        ],
+        dispositivos: [
+            { nome: 'Computadores', custo: 24.44, cliques: 34, conv: 8 },
+            { nome: 'Smartphones', custo: 463.14, cliques: 698, conv: 141 },
+            { nome: 'Tablets', custo: 0.37, cliques: 1, conv: 0 }
+        ],
+        keywords: [
+            { palavra: 'minon', tipo: 'Correspondência ampla', custo: 133.49, cliques: 156, ctr: 28.36 },
+            { palavra: 'loja minon', tipo: 'Correspondência ampla', custo: 53.22, cliques: 73, ctr: 35.61 },
+            { palavra: 'loja de roupas infantil', tipo: 'Correspondência ampla', custo: 31.20, cliques: 43, ctr: 9.49 },
+            { palavra: 'lojas de roupas femininas', tipo: 'Correspondência ampla', custo: 26.91, cliques: 41, ctr: 10.43 },
+            { palavra: 'roupa de bebe', tipo: 'Correspondência ampla', custo: 20.15, cliques: 19, ctr: 8.52 }
+        ]
+    };
+
+    // ================================================================
+    // 5. RENDERIZAÇÃO
+    // ================================================================
+    // Resumo geral
+    function renderResumo() {
+        document.getElementById('resumoMetaGasto').innerHTML = fmtCurrency(totalMetaSpent);
+        document.getElementById('resumoMetaMsg').innerHTML = fmtInt(totalMetaMsg);
+        document.getElementById('resumoMetaCPA').innerHTML = fmtCurrency(metaCPA);
+        document.getElementById('resumoMetaCTR').innerHTML = metaCTR.toFixed(2);
+        document.getElementById('resumoMetaFreq').innerHTML = metaFreq.toFixed(2);
+
+        document.getElementById('resumoGoogleGasto').innerHTML = fmtCurrency(googleData.gasto);
+        document.getElementById('resumoGoogleConv').innerHTML = fmtInt(googleData.conversoes);
+        document.getElementById('resumoGoogleCPA').innerHTML = fmtCurrency(googleData.custoConv);
+        document.getElementById('resumoGoogleCliques').innerHTML = fmtInt(googleData.cliques);
+
+        const bonsMeta = metaAnuncios.filter(a => a.messaging > 5 && (a.spent/a.messaging) < metaCPA * 0.8);
+        document.getElementById('resumoDestaquesMeta').innerHTML = bonsMeta.map(a => a.name).join('; ') || 'Nenhum destaque específico.';
+
+        const topKeywords = googleData.keywords.sort((a,b) => b.ctr - a.ctr).slice(0,2);
+        document.getElementById('resumoDestaquesGoogle').innerHTML = topKeywords.map(k => `${k.palavra} (CTR ${k.ctr.toFixed(2)}%)`).join('; ') || '-';
+
+        const ruinsMeta = metaAnuncios.filter(a => a.messaging > 5 && (a.spent/a.messaging) > metaCPA * 1.3);
+        document.getElementById('resumoOportunidades').innerHTML = ruinsMeta.map(a => a.name).join('; ') || 'Nenhum anúncio com CPA acima da média.';
+
+        let insights = [];
+        const setorIdade = {};
+        metaAnuncios.forEach(a => {
+            a.ageGender.forEach(ag => {
+                const key = `${a.setor}-${ag.age}-${ag.gender}`;
+                if (!setorIdade[key]) setorIdade[key] = 0;
+                setorIdade[key] += ag.messaging;
+            });
+        });
+        const sorted = Object.entries(setorIdade).sort((a,b) => b[1] - a[1]).slice(0,3);
+        insights = sorted.map(([key, val]) => {
+            const parts = key.split('-');
+            return `${parts[0]} (${parts[1]}, ${parts[2]}) gerou ${val} mensagens`;
+        });
+        document.getElementById('resumoInsights').innerHTML = insights.join('; ') || 'Nenhum dado de idade/gênero disponível.';
+
+        const sugestoes = [];
+        const femInsta = metaAnuncios.filter(a => a.setor === 'Feminino' && a.platform.includes('Instagram'));
+        if (femInsta.length > 0) {
+            sugestoes.push('Priorizar criativos femininos no Instagram, especialmente para faixa 25-34 anos (maior volume).');
+        }
+        const masc = metaAnuncios.filter(a => a.setor === 'Masculino');
+        if (masc.some(a => a.messaging > 10)) {
+            sugestoes.push('Manter investimento em masculino, mas testar novos ângulos criativos para melhorar CTR.');
+        }
+        const infantil = metaAnuncios.filter(a => a.setor === 'Infantil');
+        if (infantil.some(a => a.messaging > 20)) {
+            sugestoes.push('O setor Infantil tem potencial – explore vídeos e carrosséis para aumentar engajamento.');
+        }
+        document.getElementById('resumoSugestoes').innerHTML = sugestoes.join(' ') || 'Analise os dados para definir próximos passos.';
+    }
+
+    // ===== Meta Cards (com tooltips e comparação) =====
+    function renderMetaCards() {
+        const pctGasto = pct(meta2025.spent, totalMetaSpent);
+        const pctMsg = pct(meta2025.messaging, totalMetaMsg);
+        const pctCpa = -pct(meta2025.cpa, metaCPA);
+        const cards = [
+            {
+                label: 'Gasto Meta',
+                val: fmtCurrency(totalMetaSpent),
+                comp: fmtCurrency(meta2025.spent),
+                pct: pctGasto,
+                suffix: 'vs jun/25',
+                tooltip: `Em jun/26 gastamos <strong>${fmtCurrency(totalMetaSpent)}</strong>, um <strong>${pctGasto > 0 ? 'aumento' : 'redução'}</strong> de <strong>${Math.abs(pctGasto).toFixed(1)}%</strong> em relação a jun/25 (R$ ${fmt(meta2025.spent)}).<br><br>` +
+                    `<span class="${pctGasto > 5 ? 'good' : 'neutral'}">📌 Interpretação:</span> O aumento no investimento foi planejado para testar novos públicos e criativos. Como as mensagens cresceram ${pctMsg.toFixed(1)}%, o retorno está sendo positivo.`
+            },
+            {
+                label: 'Mensagens Meta',
+                val: fmtInt(totalMetaMsg),
+                comp: fmtInt(meta2025.messaging),
+                pct: pctMsg,
+                suffix: 'vs jun/25',
+                tooltip: `Em jun/26 geramos <strong>${fmtInt(totalMetaMsg)}</strong> mensagens, um <strong>${pctMsg > 0 ? 'crescimento' : 'queda'}</strong> de <strong>${Math.abs(pctMsg).toFixed(1)}%</strong> em relação a jun/25 (${fmtInt(meta2025.messaging)}).<br><br>` +
+                    `<span class="${pctMsg > 10 ? 'good' : pctMsg < -5 ? 'bad' : 'neutral'}">📌 Interpretação:</span> O volume de mensagens é o principal indicador de engajamento. Um crescimento acima de 10% é considerado excelente.`
+            },
+            {
+                label: 'CPA Meta',
+                val: fmtCurrency(metaCPA),
+                comp: fmtCurrency(meta2025.cpa),
+                pct: pctCpa,
+                suffix: 'vs jun/25',
+                invert: true,
+                tooltip: `Em jun/26 o CPA foi de <strong>${fmtCurrency(metaCPA)}</strong>, uma <strong>${pctCpa < 0 ? 'redução' : 'alta'}</strong> de <strong>${Math.abs(pctCpa).toFixed(1)}%</strong> em relação a jun/25 (R$ ${fmt(meta2025.cpa)}).<br><br>` +
+                    `<span class="${pctCpa < -5 ? 'good' : pctCpa > 5 ? 'bad' : 'neutral'}">📌 Interpretação:</span> Quanto menor o CPA, melhor. Reduções acima de 5% indicam maior eficiência da campanha.`
+            },
+            {
+                label: 'CTR Meta',
+                val: metaCTR.toFixed(2) + '%',
+                tooltip: `A taxa de cliques (CTR) média foi de <strong>${metaCTR.toFixed(2)}%</strong>.<br><br>` +
+                    `<span class="${metaCTR > 3 ? 'good' : metaCTR < 1.5 ? 'bad' : 'neutral'}">📌 Interpretação:</span> CTR acima de 3% é considerado bom para Meta Ads. Abaixo de 1,5% sugere que os criativos ou a segmentação precisam ser revisados.`
+            }
+        ];
+        const container = document.getElementById('metaCards');
+        container.innerHTML = cards.map(c => {
+            let cls = 'neutral', arrow = '→';
+            if (c.pct !== undefined) {
+                if (c.pct > 3) { cls = 'up'; arrow = '▲'; } else if (c.pct < -3) { cls = 'down'; arrow = '▼'; }
+                if (c.invert) { if (cls === 'up') cls = 'down'; else if (cls === 'down') cls = 'up'; }
+            }
+            const pctAbs = c.pct !== undefined ? Math.abs(c.pct) : 0;
+            const compHtml = c.pct !== undefined ? `<div class="comparison"><span class="${cls}">${arrow} ${pctAbs.toFixed(1)}%</span> <span>${c.suffix}</span></div>` : '';
+            return `<div class="card"><div class="label">${c.label}<span class="info-icon">ⓘ<span class="tooltip-text">${c.tooltip}</span></span></div><div class="value">${c.val}</div>${compHtml}</div>`;
+        }).join('');
+    }
+
+    // ===== Google Cards (com tooltips e comparação) =====
+    function renderGoogleCards() {
+        const pctGasto = pct(googleData.gasto2025, googleData.gasto);
+        const pctConv = pct(googleData.conversoes2025, googleData.conversoes);
+        const pctCpa = -pct(googleData.custoConv2025, googleData.custoConv);
+        const pctCliques = pct(googleData.cliques2025, googleData.cliques);
+        const cards = [
+            {
+                label: 'Gasto Google',
+                val: fmtCurrency(googleData.gasto),
+                comp: fmtCurrency(googleData.gasto2025),
+                pct: pctGasto,
+                suffix: 'vs jun/25',
+                tooltip: `Em jun/26 gastamos <strong>${fmtCurrency(googleData.gasto)}</strong>, um <strong>${pctGasto > 0 ? 'aumento' : 'redução'}</strong> de <strong>${Math.abs(pctGasto).toFixed(1)}%</strong> em relação a jun/25 (R$ ${fmt(googleData.gasto2025)}).<br><br>` +
+                    `<span class="${pctGasto < -5 ? 'good' : pctGasto > 5 ? 'bad' : 'neutral'}">📌 Interpretação:</span> Redução no gasto com manutenção ou aumento das conversões é um sinal de eficiência.`
+            },
+            {
+                label: 'Conversões Google',
+                val: fmtInt(googleData.conversoes),
+                comp: fmtInt(googleData.conversoes2025),
+                pct: pctConv,
+                suffix: 'vs jun/25',
+                tooltip: `Em jun/26 tivemos <strong>${fmtInt(googleData.conversoes)}</strong> conversões, um <strong>${pctConv > 0 ? 'crescimento' : 'queda'}</strong> de <strong>${Math.abs(pctConv).toFixed(1)}%</strong> em relação a jun/25 (${fmtInt(googleData.conversoes2025)}).<br><br>` +
+                    `<span class="${pctConv > 5 ? 'good' : pctConv < -5 ? 'bad' : 'neutral'}">📌 Interpretação:</span> Conversões são o objetivo final. Mesmo com queda no volume, se o CPA melhorou, a campanha pode ser considerada bem-sucedida.`
+            },
+            {
+                label: 'CPA Google',
+                val: fmtCurrency(googleData.custoConv),
+                comp: fmtCurrency(googleData.custoConv2025),
+                pct: pctCpa,
+                suffix: 'vs jun/25',
+                invert: true,
+                tooltip: `Em jun/26 o CPA foi de <strong>${fmtCurrency(googleData.custoConv)}</strong>, uma <strong>${pctCpa < 0 ? 'redução' : 'alta'}</strong> de <strong>${Math.abs(pctCpa).toFixed(1)}%</strong> em relação a jun/25 (R$ ${fmt(googleData.custoConv2025)}).<br><br>` +
+                    `<span class="${pctCpa < -3 ? 'good' : pctCpa > 3 ? 'bad' : 'neutral'}">📌 Interpretação:</span> CPA estável ou em queda é um ótimo sinal. Aumentos acima de 3% merecem atenção.`
+            },
+            {
+                label: 'Cliques Google',
+                val: fmtInt(googleData.cliques),
+                comp: fmtInt(googleData.cliques2025),
+                pct: pctCliques,
+                suffix: 'vs jun/25',
+                tooltip: `Em jun/26 recebemos <strong>${fmtInt(googleData.cliques)}</strong> cliques, um <strong>${pctCliques > 0 ? 'crescimento' : 'queda'}</strong> de <strong>${Math.abs(pctCliques).toFixed(1)}%</strong> em relação a jun/25 (${fmtInt(googleData.cliques2025)}).<br><br>` +
+                    `<span class="${pctCliques > 5 ? 'good' : pctCliques < -5 ? 'bad' : 'neutral'}">📌 Interpretação:</span> Cliques são o primeiro passo para conversões. Uma queda pode ser compensada por melhor qualidade do tráfego (maior taxa de conversão).`
+            }
+        ];
+        const container = document.getElementById('googleCards');
+        container.innerHTML = cards.map(c => {
+            let cls = 'neutral', arrow = '→';
+            if (c.pct !== undefined) {
+                if (c.pct > 3) { cls = 'up'; arrow = '▲'; } else if (c.pct < -3) { cls = 'down'; arrow = '▼'; }
+                if (c.invert) { if (cls === 'up') cls = 'down'; else if (cls === 'down') cls = 'up'; }
+            }
+            const pctAbs = c.pct !== undefined ? Math.abs(c.pct) : 0;
+            const compHtml = c.pct !== undefined ? `<div class="comparison"><span class="${cls}">${arrow} ${pctAbs.toFixed(1)}%</span> <span>${c.suffix}</span></div>` : '';
+            return `<div class="card"><div class="label">${c.label}<span class="info-icon">ⓘ<span class="tooltip-text">${c.tooltip}</span></span></div><div class="value">${c.val}</div>${compHtml}</div>`;
+        }).join('');
+    }
+
+    // ===== Gráficos Meta =====
+    function renderMetaComparativo() {
+        new Chart(document.getElementById('chartMetaComparativo'), {
+            type: 'bar',
+            data: {
+                labels: ['Gasto (R$)', 'Mensagens', 'CPA (R$)'],
+                datasets: [
+                    { label: 'Jun/2025', data: [meta2025.spent, meta2025.messaging, meta2025.cpa], backgroundColor: '#90a4ae' },
+                    { label: 'Jun/2026', data: [totalMetaSpent, totalMetaMsg, metaCPA], backgroundColor: '#42a5f5' }
+                ]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+    }
+
+    function renderMetaPlataforma() {
+        const counts = {};
+        metaAnuncios.forEach(a => {
+            const plat = a.platform.split('/')[0];
+            counts[plat] = (counts[plat] || 0) + a.messaging;
+        });
+        new Chart(document.getElementById('chartMetaPlataforma'), {
+            type: 'pie',
+            data: { labels: Object.keys(counts), datasets: [{ data: Object.values(counts), backgroundColor: ['#3b82f6','#8b5cf6','#10b981','#f59e0b'] }] },
+            options: { responsive: true, plugins: { legend: { position: 'right' } } }
+        });
+    }
+
+    function renderMetaSetorIdade() {
+        const data = {};
+        metaAnuncios.forEach(a => {
+            a.ageGender.forEach(ag => {
+                const key = a.setor;
+                if (!data[key]) data[key] = {};
+                data[key][ag.age] = (data[key][ag.age] || 0) + ag.messaging;
+            });
+        });
+        const setores = Object.keys(data);
+        const idades = ['18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
+        const datasets = idades.map(age => ({
+            label: age,
+            data: setores.map(s => data[s][age] || 0),
+            backgroundColor: ['#1d4ed8','#c2185b','#00838f','#e65100','#7b1fa2','#b71c1c'][idades.indexOf(age)]
+        }));
+        new Chart(document.getElementById('chartMetaSetorIdade'), {
+            type: 'bar',
+            data: { labels: setores, datasets: datasets },
+            options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { x: { stacked: true }, y: { stacked: true } } }
+        });
+    }
+
+    // ===== Tabela Meta =====
+    function renderMetaTabela() {
+        const tbody = document.getElementById('metaTabela');
+        const badgeSetor = {
+            'Masculino': 'badge-setor-masculino',
+            'Feminino': 'badge-setor-feminino',
+            'Infantil': 'badge-setor-infantil',
+            'Cama e Banho': 'badge-setor-cama',
+            'Institucional': 'badge-setor-institucional'
+        };
+        tbody.innerHTML = metaAnuncios.map(a => {
+            const cpa = a.messaging > 0 ? (a.spent / a.messaging) : 0;
+            return `<tr>
+                <td><strong>${a.name}</strong></td>
+                <td><span class="badge ${badgeSetor[a.setor] || ''}">${a.setor}</span></td>
+                <td>${a.tags.map(t => `<span class="badge badge-tag">${t}</span>`).join(' ')}</td>
+                <td>R$ ${fmt(a.spent)}</td>
+                <td>${a.messaging}</td>
+                <td>${a.messaging > 0 ? 'R$ '+fmt(cpa) : '-'}</td>
+                <td>${fmtInt(a.reach)}</td>
+                <td>${a.frequency ? a.frequency.toFixed(2) : '-'}</td>
+                <td>${a.ctr ? a.ctr.toFixed(2)+'%' : '-'}</td>
+                <td>${a.platform}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    // ===== Insight Box Meta =====
+    function renderMetaInsight() {
+        const combinacoes = {};
+        metaAnuncios.forEach(a => {
+            a.ageGender.forEach(ag => {
+                const key = `${a.setor} - ${ag.age} - ${ag.gender}`;
+                if (!combinacoes[key]) combinacoes[key] = 0;
+                combinacoes[key] += ag.messaging;
+            });
+        });
+        const sorted = Object.entries(combinacoes).sort((a,b) => b[1] - a[1]);
+        const top = sorted.slice(0, 3);
+        let html = `<strong>📊 Insights por idade/gênero:</strong><br>`;
+        top.forEach(([key, val]) => {
+            html += `🔹 ${key}: ${val} mensagens<br>`;
+        });
+        html += `<br><strong>💡 Ação recomendada:</strong> `;
+        if (top.length > 0) {
+            const first = top[0][0].split(' - ');
+            html += `Priorize anúncios do setor <strong>${first[0]}</strong> para o público <strong>${first[1]} (${first[2]})</strong>, pois é o segmento com maior engajamento.`;
+        } else {
+            html += 'Nenhum dado disponível.';
+        }
+        document.getElementById('metaInsightBox').innerHTML = html;
+    }
+
+    // ===== Gráficos Google =====
+    function renderGoogleComparativo() {
+        new Chart(document.getElementById('chartGoogleComparativo'), {
+            type: 'bar',
+            data: {
+                labels: ['Gasto (R$)', 'Conversões', 'Cliques', 'CPA (R$)'],
+                datasets: [
+                    { label: '2025', data: [googleData.gasto2025, googleData.conversoes2025, googleData.cliques2025, googleData.custoConv2025], backgroundColor: '#90a4ae' },
+                    { label: '2026', data: [googleData.gasto, googleData.conversoes, googleData.cliques, googleData.custoConv], backgroundColor: '#42a5f5' }
+                ]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+    }
+
+    function renderGoogleRede() {
+        new Chart(document.getElementById('chartGoogleRede'), {
+            type: 'bar',
+            data: {
+                labels: googleData.redes.map(r => r.nome),
+                datasets: [
+                    { label: 'Gasto (R$)', data: googleData.redes.map(r => r.custo), backgroundColor: '#ffb74d' },
+                    { label: 'Conversões', data: googleData.redes.map(r => r.conv), backgroundColor: '#4fc3f7' }
+                ]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+    }
+
+    function renderGoogleDispositivo() {
+        const disp = googleData.dispositivos.filter(d => d.custo > 0);
+        new Chart(document.getElementById('chartGoogleDispositivo'), {
+            type: 'bar',
+            data: {
+                labels: disp.map(d => d.nome),
+                datasets: [
+                    { label: 'Gasto (R$)', data: disp.map(d => d.custo), backgroundColor: '#ffb74d' },
+                    { label: 'Conversões', data: disp.map(d => d.conv), backgroundColor: '#4fc3f7' }
+                ]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+    }
+
+    function renderGoogleKeywords() {
+        const tbody = document.getElementById('googleKeywords');
+        tbody.innerHTML = googleData.keywords.map(k => `
+            <tr><td><strong>${k.palavra}</strong></td><td>${k.tipo}</td><td>R$ ${fmt(k.custo)}</td><td>${k.cliques}</td><td>${k.ctr.toFixed(2)}%</td></tr>
+        `).join('');
+    }
+
+    // ================================================================
+    // 6. INICIALIZAÇÃO
+    // ================================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        renderResumo();
+        renderMetaCards();
+        renderGoogleCards();
+        renderMetaComparativo();
+        renderMetaPlataforma();
+        renderMetaSetorIdade();
+        renderMetaTabela();
+        renderMetaInsight();
+        renderGoogleComparativo();
+        renderGoogleRede();
+        renderGoogleDispositivo();
+        renderGoogleKeywords();
+    });
+</script>
+</body>
+</html>
