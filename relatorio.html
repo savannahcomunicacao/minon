@@ -16,6 +16,8 @@
         .resumo-box h2 { font-size:20px; color:#e65100; margin-bottom:8px; }
         .resumo-box .grid-resumo { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
         .resumo-box .coluna p { margin:6px 0; font-size:15px; line-height:1.6; }
+        .resumo-box .coluna .insight-item { background: #f5f5f5; border-radius:8px; padding:10px 14px; margin:6px 0; border-left:3px solid #ffb74d; }
+        .resumo-box .coluna .insight-item strong { color:#e65100; }
 
         .accordion { background:#fff; border-radius:16px; margin-bottom:24px; border:1px solid #e9edf4; box-shadow:0 4px 12px rgba(0,0,0,0.04); overflow:hidden; }
         .accordion-header { background:#fff; padding:18px 24px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e9edf4; transition:background 0.2s; }
@@ -56,6 +58,13 @@
 
         .insight-box { background:#e3f2fd; border-left:4px solid #1a73e8; border-radius:8px; padding:12px 16px; margin:12px 0; }
         .insight-box strong { color:#1a73e8; }
+        .badge { display:inline-block; padding:2px 10px; border-radius:30px; font-size:11px; font-weight:600; margin:1px 2px; }
+        .badge-setor-masculino { background:#dbeafe; color:#1d4ed8; }
+        .badge-setor-feminino { background:#fce4ec; color:#c2185b; }
+        .badge-setor-infantil { background:#e0f7fa; color:#00838f; }
+        .badge-setor-cama { background:#f3e5f5; color:#7b1fa2; }
+        .badge-setor-institucional { background:#e8eaf6; color:#283593; }
+        .badge-tag { background:#fff3e0; color:#e65100; }
 
         @media (max-width:768px) { .chart-row { grid-template-columns:1fr; } .grid-cards { grid-template-columns:1fr 1fr; } .resumo-box .grid-resumo { grid-template-columns:1fr; } }
         @media (max-width:480px) { .grid-cards { grid-template-columns:1fr; } }
@@ -70,18 +79,31 @@
         <span style="margin-left:12px;">🖱️ Passe o mouse no <strong>ⓘ</strong> para entender cada métrica.</span>
     </div>
 
-    <!-- ========== RESUMO GERAL ========== -->
+    <!-- ========== RESUMO GERAL COM INSIGHTS ========== -->
     <div class="resumo-box" id="resumoGeral">
         <h2>📌 Resumo e Insights do Mês</h2>
         <div class="grid-resumo">
             <div class="coluna">
                 <p><strong>🔢 Meta Ads:</strong> <span id="resumoMetaGasto"></span> gastos, <span id="resumoMetaMsg"></span> mensagens, <span id="resumoMetaLP"></span> landing page views, CTR <span id="resumoMetaCTR"></span>%, Frequência <span id="resumoMetaFreq"></span>.</p>
                 <p><strong>✅ Destaques:</strong> <span id="resumoDestaques"></span></p>
+                <div class="insight-item">
+                    <strong>📦 Insight de Produto:</strong> <span id="insightProduto"></span>
+                </div>
+                <div class="insight-item">
+                    <strong>🎨 Insight de Produção (Conteúdo Orgânico):</strong> <span id="insightProducao"></span>
+                </div>
             </div>
             <div class="coluna">
                 <p><strong>⚠️ Oportunidades:</strong> <span id="resumoOportunidades"></span></p>
-                <p><strong>💡 Insights por idade/gênero:</strong> <span id="resumoInsights"></span></p>
-                <p><strong>📌 Sugestão:</strong> <span id="resumoSugestoes"></span></p>
+                <div class="insight-item">
+                    <strong>💡 Insights por idade/gênero:</strong> <span id="resumoInsights"></span>
+                </div>
+                <div class="insight-item">
+                    <strong>📌 Sugestão de baixo orçamento:</strong> <span id="resumoSugestoes"></span>
+                </div>
+                <div class="insight-item">
+                    <strong>🔄 Aprendizados para orgânico:</strong> <span id="insightOrganico"></span>
+                </div>
             </div>
         </div>
     </div>
@@ -203,7 +225,6 @@
     // ================================================================
     // 2. DADOS META ADS
     // ================================================================
-    // Anúncios com gasto > 0, incluindo landing page views
     const metaAnuncios = [
         {
             name: "Imagem - Dia dos namorados 26 - Linktree",
@@ -340,11 +361,10 @@
     const totalMsg = metaAnuncios.reduce((s, i) => s + i.messaging, 0);
     const totalLP = metaAnuncios.reduce((s, i) => s + i.landingPage, 0);
     const totalReach = metaAnuncios.reduce((s, i) => s + i.reach, 0);
-    const cpaMedia = totalMsg > 0 ? totalSpent / totalMsg : 0;
     const ctrMedia = metaAnuncios.reduce((s, i) => s + (i.ctr || 0), 0) / metaAnuncios.filter(a => a.ctr).length;
     const freqMedia = metaAnuncios.reduce((s, i) => s + (i.frequency || 0), 0) / metaAnuncios.filter(a => a.frequency).length;
 
-    // Dados 2025 (já conhecidos)
+    // Dados 2025
     const meta2025 = { spent: 969.67, messaging: 113, landingPage: 0 };
 
     // ================================================================
@@ -382,7 +402,6 @@
     // 4. RENDERIZAÇÃO
     // ================================================================
 
-    // Resumo geral
     function renderResumo() {
         document.getElementById('resumoMetaGasto').innerHTML = fmtCurrency(totalSpent);
         document.getElementById('resumoMetaMsg').innerHTML = fmtInt(totalMsg);
@@ -390,20 +409,180 @@
         document.getElementById('resumoMetaCTR').innerHTML = ctrMedia.toFixed(2);
         document.getElementById('resumoMetaFreq').innerHTML = freqMedia.toFixed(2);
 
-        // Destaques: anúncios com CPA < média * 0.8 e > 5 mensagens
-        const destaques = metaAnuncios.filter(a => a.messaging > 5 && (a.spent/a.messaging) < cpaMedia * 0.8);
-        document.getElementById('resumoDestaques').innerHTML = destaques.map(a => a.name).join('; ') || 'Nenhum destaque específico.';
+        // Destaques: anúncios com mais mensagens e bom custo por mensagem
+        const destaques = metaAnuncios
+            .filter(a => a.messaging > 10)
+            .sort((a, b) => (a.spent / a.messaging) - (b.spent / b.messaging))
+            .slice(0, 3);
+        document.getElementById('resumoDestaques').innerHTML = destaques.length > 0 
+            ? destaques.map(a => `<strong>"${a.name}"</strong> (${a.messaging} msgs, R$ ${fmt(a.spent/a.messaging)} por msg)`).join('; ')
+            : 'Nenhum destaque específico.';
 
-        // Oportunidades: anúncios com CPA > média * 1.3
-        const oportunidades = metaAnuncios.filter(a => a.messaging > 5 && (a.spent/a.messaging) > cpaMedia * 1.3);
-        document.getElementById('resumoOportunidades').innerHTML = oportunidades.map(a => a.name).join('; ') || 'Nenhum anúncio com CPA acima da média.';
+        // Oportunidades: anúncios com poucas mensagens e alto custo por mensagem
+        const oportunidades = metaAnuncios
+            .filter(a => a.messaging > 0 && a.messaging < 10 && (a.spent / a.messaging) > 10)
+            .sort((a, b) => (b.spent / b.messaging) - (a.spent / a.messaging));
+        document.getElementById('resumoOportunidades').innerHTML = oportunidades.length > 0
+            ? oportunidades.map(a => `<strong>"${a.name}"</strong> (R$ ${fmt(a.spent/a.messaging)} por msg, ${a.messaging} msgs)`).join('; ')
+            : 'Nenhum anúncio com desempenho abaixo da média.';
 
-        // Insights (simulados)
-        document.getElementById('resumoInsights').innerHTML = 'Feminino (25-34, female) gerou mais mensagens; considere focar nesse público.';
-        document.getElementById('resumoSugestoes').innerHTML = 'Priorizar criativos femininos no Instagram, especialmente para faixa 25-34 anos.';
+        // ===== INSIGHTS DE PRODUTO =====
+        const setoresComDados = metaAnuncios.filter(a => a.messaging > 5);
+        const setorCusto = {};
+        setoresComDados.forEach(a => {
+            const custo = a.spent / a.messaging;
+            if (!setorCusto[a.setor]) setorCusto[a.setor] = [];
+            setorCusto[a.setor].push(custo);
+        });
+        const setorCustoMedia = {};
+        Object.keys(setorCusto).forEach(s => {
+            setorCustoMedia[s] = setorCusto[s].reduce((acc, val) => acc + val, 0) / setorCusto[s].length;
+        });
+        const sortedSetores = Object.entries(setorCustoMedia).sort((a, b) => a[1] - b[1]);
+        let produtoInsight = '';
+        if (sortedSetores.length > 0) {
+            const melhor = sortedSetores[0];
+            produtoInsight = `O setor com melhor custo-benefício é <strong>${melhor[0]}</strong> (R$ ${fmt(melhor[1])} por mensagem). `;
+            if (sortedSetores.length > 1) {
+                const segundo = sortedSetores[1];
+                produtoInsight += `O segundo melhor é <strong>${segundo[0]}</strong> (R$ ${fmt(segundo[1])} por mensagem). `;
+            }
+            const topAnuncio = metaAnuncios
+                .filter(a => a.messaging > 10)
+                .sort((a, b) => (a.spent / a.messaging) - (b.spent / b.messaging))[0];
+            if (topAnuncio) {
+                produtoInsight += `Destaque para o anúncio <strong>"${topAnuncio.name}"</strong> com R$ ${fmt(topAnuncio.spent/topAnuncio.messaging)} por mensagem e ${topAnuncio.messaging} conversas. `;
+            }
+            const piorSetor = sortedSetores[sortedSetores.length - 1];
+            if (piorSetor && piorSetor[1] > setorCustoMedia[sortedSetores[0][0]] * 1.5) {
+                produtoInsight += `⚠️ <strong>${piorSetor[0]}</strong> tem custo ${(piorSetor[1]/setorCustoMedia[sortedSetores[0][0]]).toFixed(1)}x maior – vale revisar criativos ou ofertas.`;
+            }
+        } else {
+            produtoInsight = 'Nenhum dado suficiente para análise de produto.';
+        }
+        document.getElementById('insightProduto').innerHTML = produtoInsight;
+
+        // ===== INSIGHTS DE PRODUÇÃO =====
+        const formatos = {
+            'Imagem': metaAnuncios.filter(a => a.name.includes('Imagem')),
+            'Vídeo': metaAnuncios.filter(a => a.name.includes('Vídeo')),
+            'Carrossel': metaAnuncios.filter(a => a.name.includes('Carrossel'))
+        };
+        const formatoPerformance = {};
+        Object.keys(formatos).forEach(f => {
+            const items = formatos[f];
+            if (items.length > 0) {
+                const totalMsgFormato = items.reduce((s, i) => s + i.messaging, 0);
+                const totalGastoFormato = items.reduce((s, i) => s + i.spent, 0);
+                const custoPorMsg = totalMsgFormato > 0 ? totalGastoFormato / totalMsgFormato : 0;
+                formatoPerformance[f] = { totalMsg: totalMsgFormato, custoPorMsg: custoPorMsg, count: items.length };
+            }
+        });
+        const sortedFormatos = Object.entries(formatoPerformance).sort((a, b) => a[1].custoPorMsg - b[1].custoPorMsg);
+        let producaoInsight = '';
+        if (sortedFormatos.length > 0) {
+            const melhorFormato = sortedFormatos[0];
+            producaoInsight += `O formato que gerou mais engajamento foi <strong>${melhorFormato[0]}</strong> (R$ ${fmt(melhorFormato[1].custoPorMsg)} por mensagem). `;
+            if (melhorFormato[0] === 'Vídeo') {
+                producaoInsight += '🎥 Vídeos têm alto potencial para conteúdo orgânico – use cortes dos anúncios para Reels/Shorts. ';
+            } else if (melhorFormato[0] === 'Carrossel') {
+                producaoInsight += '🔄 Carrosséis são ótimos para tutoriais e mostruários – replique no feed orgânico com "vá para o lado". ';
+            } else if (melhorFormato[0] === 'Imagem') {
+                producaoInsight += '🖼️ Imagens estáticas performaram bem – use as melhores como posts orgânicos de destaque. ';
+            }
+            const tagsCount = {};
+            metaAnuncios.forEach(a => {
+                a.tags.forEach(t => {
+                    tagsCount[t] = (tagsCount[t] || 0) + a.messaging;
+                });
+            });
+            const topTags = Object.entries(tagsCount).sort((a, b) => b[1] - a[1]).slice(0, 3);
+            if (topTags.length > 0) {
+                producaoInsight += `Temas com maior engajamento: `;
+                producaoInsight += topTags.map(([tag, count]) => `<strong>${tag}</strong> (${count} mensagens)`).join(', ');
+                producaoInsight += `. Use esses temas como pauta para conteúdo orgânico.`;
+            }
+        } else {
+            producaoInsight = 'Nenhum dado suficiente para análise de formatos.';
+        }
+        document.getElementById('insightProducao').innerHTML = producaoInsight;
+
+        // ===== INSIGHTS POR IDADE/GÊNERO =====
+        const ageGenderMap = {};
+        metaAnuncios.forEach(a => {
+            a.ageGender.forEach(ag => {
+                const key = `${ag.age} - ${ag.gender}`;
+                ageGenderMap[key] = (ageGenderMap[key] || 0) + ag.messaging;
+            });
+        });
+        const sortedAgeGender = Object.entries(ageGenderMap).sort((a, b) => b[1] - a[1]);
+        let ageGenderInsight = '';
+        if (sortedAgeGender.length > 0) {
+            const top = sortedAgeGender.slice(0, 3);
+            ageGenderInsight = top.map(([key, val]) => `<strong>${key}</strong> (${val} mensagens)`).join('; ');
+            ageGenderInsight += '. Priorize esse público em futuras campanhas.';
+        } else {
+            ageGenderInsight = 'Nenhum dado de idade/gênero disponível.';
+        }
+        document.getElementById('resumoInsights').innerHTML = ageGenderInsight;
+
+        // ===== SUGESTÃO DE BAIXO ORÇAMENTO =====
+        const bonsEBaixos = metaAnuncios
+            .filter(a => a.messaging > 5 && a.spent < 200)
+            .sort((a, b) => (a.spent / a.messaging) - (b.spent / b.messaging))
+            .slice(0, 3);
+        let baixoOrcamentoInsight = '';
+        if (bonsEBaixos.length > 0) {
+            baixoOrcamentoInsight = `Anúncios com melhor custo-benefício para baixo orçamento: `;
+            baixoOrcamentoInsight += bonsEBaixos.map(a => 
+                `<strong>"${a.name}"</strong> (R$ ${fmt(a.spent)}, ${a.messaging} msgs, R$ ${fmt(a.spent/a.messaging)} por mensagem)`
+            ).join('; ');
+            baixoOrcamentoInsight += '. Replique esses criativos com orçamento reduzido para testar novos públicos.';
+        } else {
+            baixoOrcamentoInsight = 'Nenhum anúncio com baixo custo e bom desempenho identificado.';
+        }
+        document.getElementById('resumoSugestoes').innerHTML = baixoOrcamentoInsight;
+
+        // ===== APRENDIZADOS PARA ORGÂNICO =====
+        const engagementPorSetor = {};
+        metaAnuncios.forEach(a => {
+            if (a.reach > 0 && a.messaging > 0) {
+                const taxa = a.messaging / a.reach;
+                if (!engagementPorSetor[a.setor]) engagementPorSetor[a.setor] = [];
+                engagementPorSetor[a.setor].push(taxa);
+            }
+        });
+        const engagementMedio = {};
+        Object.keys(engagementPorSetor).forEach(s => {
+            engagementMedio[s] = engagementPorSetor[s].reduce((acc, val) => acc + val, 0) / engagementPorSetor[s].length;
+        });
+        const sortedEngagement = Object.entries(engagementMedio).sort((a, b) => b[1] - a[1]);
+        let organicoInsight = '';
+        if (sortedEngagement.length > 0) {
+            const topSetor = sortedEngagement[0];
+            organicoInsight += `O setor com maior taxa de engajamento foi <strong>${topSetor[0]}</strong> (${(topSetor[1]*100).toFixed(2)}% de conversas por alcance). `;
+            organicoInsight += `💡 Dica: use os melhores criativos desse setor como base para posts orgânicos. `;
+            if (sortedFormatos.length > 0) {
+                const melhorFormato = sortedFormatos[0][0];
+                organicoInsight += `O formato <strong>${melhorFormato}</strong> foi o mais eficiente – priorize ele no planejamento de conteúdo. `;
+            }
+            const tagsCount = {};
+            metaAnuncios.forEach(a => {
+                a.tags.forEach(t => {
+                    tagsCount[t] = (tagsCount[t] || 0) + a.messaging;
+                });
+            });
+            const topTag = Object.entries(tagsCount).sort((a, b) => b[1] - a[1])[0];
+            if (topTag) {
+                organicoInsight += `O tema <strong>${topTag[0]}</strong> gerou ${topTag[1]} mensagens – use como pauta para posts orgânicos.`;
+            }
+        } else {
+            organicoInsight = 'Nenhum dado suficiente para aprendizado orgânico.';
+        }
+        document.getElementById('insightOrganico').innerHTML = organicoInsight;
     }
 
-    // Cards gerais (com tooltips e comparação)
+    // ===== CARDS GERAIS =====
     function renderCardsGerais() {
         const pctGasto = pct(meta2025.spent, totalSpent);
         const pctMsg = pct(meta2025.messaging, totalMsg);
@@ -450,7 +629,7 @@
         }).join('');
     }
 
-    // Gráfico comparativo
+    // ===== GRÁFICOS =====
     function renderComparativo() {
         new Chart(document.getElementById('chartMetaComparativo'), {
             type: 'bar',
@@ -465,7 +644,6 @@
         });
     }
 
-    // Gráfico de setor
     function renderSetor() {
         const counts = {};
         metaAnuncios.forEach(a => {
@@ -483,7 +661,6 @@
         });
     }
 
-    // Gráfico de Landing Page
     function renderLP() {
         const lpAnuncios = metaAnuncios.filter(a => a.landingPage > 0);
         new Chart(document.getElementById('chartLP'), {
@@ -496,7 +673,6 @@
         });
     }
 
-    // Gráfico de mensagens por plataforma
     function renderMetaPlataforma() {
         const counts = {};
         metaAnuncios.forEach(a => {
@@ -510,7 +686,6 @@
         });
     }
 
-    // Gráfico de mensagens por setor com detalhe de idade
     function renderMetaSetorIdade() {
         const data = {};
         metaAnuncios.forEach(a => {
@@ -534,7 +709,6 @@
         });
     }
 
-    // Tabela detalhada
     function renderTabela() {
         const tbody = document.getElementById('tabelaDetalhada');
         const badgeSetor = {
@@ -559,7 +733,7 @@
         `).join('');
     }
 
-    // ===== Google Cards (com tooltips e comparação) =====
+    // ===== GOOGLE ADS =====
     function renderGoogleCards() {
         const pctGasto = pct(googleData.gasto2025, googleData.gasto);
         const pctConv = pct(googleData.conversoes2025, googleData.conversoes);
@@ -613,7 +787,6 @@
         }).join('');
     }
 
-    // ===== Gráficos Google =====
     function renderGoogleComparativo() {
         new Chart(document.getElementById('chartGoogleComparativo'), {
             type: 'bar',
