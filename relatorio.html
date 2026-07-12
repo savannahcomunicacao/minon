@@ -109,6 +109,18 @@
             <canvas id="chartLP"></canvas>
         </div>
     </div>
+    <div class="chart-row">
+        <div class="chart-box">
+            <h3>📱 Mensagens por Plataforma</h3>
+            <div class="chart-hint">Distribuição por plataforma (Instagram, Facebook, WhatsApp).</div>
+            <canvas id="chartMetaPlataforma"></canvas>
+        </div>
+        <div class="chart-box">
+            <h3>🏷️ Mensagens por Setor (com detalhe de idade)</h3>
+            <div class="chart-hint">Barras empilhadas mostram a distribuição por faixa etária dentro de cada setor.</div>
+            <canvas id="chartMetaSetorIdade"></canvas>
+        </div>
+    </div>
 
     <!-- ========== TABELA DETALHADA ========== -->
     <div class="table-wrap">
@@ -196,57 +208,130 @@
         {
             name: "Imagem - Dia dos namorados 26 - Linktree",
             setor: "Feminino", tags: ["Dia dos Namorados"],
-            spent: 192.01, messaging: 1, landingPage: 673, reach: 29662, frequency: 1.46, ctr: 2.57
+            spent: 192.01, messaging: 1, landingPage: 673, reach: 29662, frequency: 1.46, ctr: 2.57,
+            platform: "Instagram/Facebook",
+            ageGender: [
+                { age: "25-34", gender: "female", messaging: 148 },
+                { age: "18-24", gender: "female", messaging: 118 },
+                { age: "35-44", gender: "female", messaging: 73 },
+                { age: "65+", gender: "female", messaging: 66 },
+                { age: "25-34", gender: "male", messaging: 66 }
+            ]
         },
         {
             name: "Imagem - Plus Size - WhatsApp Feminino",
             setor: "Feminino", tags: ["Dia dos Namorados", "Plus Size"],
-            spent: 138.24, messaging: 3, landingPage: 431, reach: 13752, frequency: 1.49, ctr: 4.00
+            spent: 138.24, messaging: 3, landingPage: 431, reach: 13752, frequency: 1.49, ctr: 4.00,
+            platform: "Instagram/Facebook",
+            ageGender: [
+                { age: "65+", gender: "female", messaging: 130 },
+                { age: "55-64", gender: "female", messaging: 101 },
+                { age: "45-54", gender: "female", messaging: 61 },
+                { age: "25-34", gender: "female", messaging: 42 }
+            ]
         },
         {
             name: "Imagem - Paleta funcional - WhatsApp Feminino",
             setor: "Feminino", tags: ["Paleta Funcional"],
-            spent: 283.49, messaging: 120, landingPage: 0, reach: 16009, frequency: 1.90, ctr: 3.47
+            spent: 283.49, messaging: 120, landingPage: 0, reach: 16009, frequency: 1.90, ctr: 3.47,
+            platform: "Facebook/Instagram",
+            ageGender: [
+                { age: "55-64", gender: "male", messaging: 28 },
+                { age: "45-54", gender: "male", messaging: 24 },
+                { age: "35-44", gender: "male", messaging: 17 },
+                { age: "55-64", gender: "female", messaging: 14 }
+            ]
         },
         {
             name: "Vídeo - Dia dos namorados - Looks Femininos - Linktree",
             setor: "Feminino", tags: ["Dia dos Namorados", "Looks"],
-            spent: 45.50, messaging: 1, landingPage: 119, reach: 6463, frequency: 1.26, ctr: 5.04
+            spent: 45.50, messaging: 1, landingPage: 119, reach: 6463, frequency: 1.26, ctr: 5.04,
+            platform: "Instagram/Facebook",
+            ageGender: [
+                { age: "45-54", gender: "female", messaging: 22 },
+                { age: "35-44", gender: "female", messaging: 18 },
+                { age: "25-34", gender: "female", messaging: 16 }
+            ]
         },
         {
             name: "Imagem - tenis feminino - WhatsApp Feminino",
             setor: "Feminino", tags: ["Tênis"],
-            spent: 183.79, messaging: 90, landingPage: 0, reach: 9363, frequency: 1.59, ctr: 3.86
+            spent: 183.79, messaging: 90, landingPage: 0, reach: 9363, frequency: 1.59, ctr: 3.86,
+            platform: "Facebook/Instagram/WhatsApp",
+            ageGender: [
+                { age: "55-64", gender: "female", messaging: 30 },
+                { age: "65+", gender: "female", messaging: 27 },
+                { age: "45-54", gender: "female", messaging: 21 },
+                { age: "35-44", gender: "female", messaging: 9 }
+            ]
         },
         {
             name: "Vídeo - Teaser Oportunidades - WhatsApp - Infantil",
             setor: "Infantil", tags: ["Oportunidades"],
-            spent: 213.83, messaging: 86, landingPage: 0, reach: 8088, frequency: 2.08, ctr: 3.22
+            spent: 213.83, messaging: 86, landingPage: 0, reach: 8088, frequency: 2.08, ctr: 3.22,
+            platform: "Instagram/Facebook/WhatsApp",
+            ageGender: [
+                { age: "35-44", gender: "female", messaging: 25 },
+                { age: "25-34", gender: "female", messaging: 25 },
+                { age: "45-54", gender: "female", messaging: 19 },
+                { age: "55-64", gender: "female", messaging: 11 }
+            ]
         },
         {
             name: "Imagem - Moletom Masculino - WhatsApp Masculino",
             setor: "Masculino", tags: ["Moletom"],
-            spent: 537.11, messaging: 69, landingPage: 0, reach: 16652, frequency: 2.71, ctr: 2.06
+            spent: 537.11, messaging: 69, landingPage: 0, reach: 16652, frequency: 2.71, ctr: 2.06,
+            platform: "Facebook/Instagram",
+            ageGender: [
+                { age: "55-64", gender: "female", messaging: 18 },
+                { age: "45-54", gender: "female", messaging: 17 },
+                { age: "35-44", gender: "female", messaging: 9 },
+                { age: "25-34", gender: "female", messaging: 5 }
+            ]
         },
         {
             name: "Carrossel - Camiseta básica feminina - WhatsApp Feminino",
             setor: "Feminino", tags: ["Camiseta"],
-            spent: 363.14, messaging: 53, landingPage: 0, reach: 9391, frequency: 2.52, ctr: 4.36
+            spent: 363.14, messaging: 53, landingPage: 0, reach: 9391, frequency: 2.52, ctr: 4.36,
+            platform: "Facebook/Instagram",
+            ageGender: [
+                { age: "45-54", gender: "female", messaging: 17 },
+                { age: "65+", gender: "female", messaging: 16 },
+                { age: "55-64", gender: "female", messaging: 12 },
+                { age: "35-44", gender: "female", messaging: 6 }
+            ]
         },
         {
             name: "Imagem - Enxoval - WhatsApp - Cama e banho",
             setor: "Cama e Banho", tags: ["Enxoval"],
-            spent: 120.46, messaging: 14, landingPage: 0, reach: 4276, frequency: 1.68, ctr: 3.08
+            spent: 120.46, messaging: 14, landingPage: 0, reach: 4276, frequency: 1.68, ctr: 3.08,
+            platform: "Facebook/Instagram",
+            ageGender: [
+                { age: "65+", gender: "female", messaging: 6 },
+                { age: "45-54", gender: "female", messaging: 4 },
+                { age: "55-64", gender: "female", messaging: 2 }
+            ]
         },
         {
             name: "dia dos namorados 2026 - WhatsApp Geral",
             setor: "Institucional", tags: ["Dia dos Namorados", "WhatsApp Geral"],
-            spent: 23.53, messaging: 5, landingPage: 0, reach: 1294, frequency: 1.45, ctr: 2.03
+            spent: 23.53, messaging: 5, landingPage: 0, reach: 1294, frequency: 1.45, ctr: 2.03,
+            platform: "Facebook/Instagram",
+            ageGender: [
+                { age: "45-54", gender: "female", messaging: 3 },
+                { age: "35-44", gender: "female", messaging: 1 },
+                { age: "18-24", gender: "female", messaging: 1 }
+            ]
         },
         {
             name: "tênis casual - WhatsApp Masculino",
             setor: "Masculino", tags: ["Tênis"],
-            spent: 21.71, messaging: 2, landingPage: 0, reach: 1714, frequency: 1.47, ctr: 0.56
+            spent: 21.71, messaging: 2, landingPage: 0, reach: 1714, frequency: 1.47, ctr: 0.56,
+            platform: "Instagram/Facebook",
+            ageGender: [
+                { age: "35-44", gender: "male", messaging: 1 },
+                { age: "25-34", gender: "male", messaging: 1 }
+            ]
         }
     ];
 
@@ -411,6 +496,44 @@
         });
     }
 
+    // Gráfico de mensagens por plataforma
+    function renderMetaPlataforma() {
+        const counts = {};
+        metaAnuncios.forEach(a => {
+            const plat = a.platform.split('/')[0];
+            counts[plat] = (counts[plat] || 0) + a.messaging;
+        });
+        new Chart(document.getElementById('chartMetaPlataforma'), {
+            type: 'pie',
+            data: { labels: Object.keys(counts), datasets: [{ data: Object.values(counts), backgroundColor: ['#3b82f6','#8b5cf6','#10b981','#f59e0b'] }] },
+            options: { responsive: true, plugins: { legend: { position: 'right' } } }
+        });
+    }
+
+    // Gráfico de mensagens por setor com detalhe de idade
+    function renderMetaSetorIdade() {
+        const data = {};
+        metaAnuncios.forEach(a => {
+            a.ageGender.forEach(ag => {
+                const key = a.setor;
+                if (!data[key]) data[key] = {};
+                data[key][ag.age] = (data[key][ag.age] || 0) + ag.messaging;
+            });
+        });
+        const setores = Object.keys(data);
+        const idades = ['18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
+        const datasets = idades.map(age => ({
+            label: age,
+            data: setores.map(s => data[s][age] || 0),
+            backgroundColor: ['#1d4ed8','#c2185b','#00838f','#e65100','#7b1fa2','#b71c1c'][idades.indexOf(age)]
+        }));
+        new Chart(document.getElementById('chartMetaSetorIdade'), {
+            type: 'bar',
+            data: { labels: setores, datasets: datasets },
+            options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { x: { stacked: true }, y: { stacked: true } } }
+        });
+    }
+
     // Tabela detalhada
     function renderTabela() {
         const tbody = document.getElementById('tabelaDetalhada');
@@ -550,6 +673,8 @@
         renderComparativo();
         renderSetor();
         renderLP();
+        renderMetaPlataforma();
+        renderMetaSetorIdade();
         renderTabela();
         renderGoogleCards();
         renderGoogleComparativo();
